@@ -47,7 +47,7 @@
       
       <h3>Liste des membres</h3>
       <table id="tableMembres">
-        <thead><tr><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th></tr></thead>
+        <thead><tr><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th>Action</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -98,13 +98,14 @@
     async function chargerMembres() {
       const data = await fetch('/api/membres').then(r => r.json());
       document.querySelector('#tableMembres tbody').innerHTML = data.map(m => `
-        <tr>
-          <td>${m.nom}</td>
-          <td>${m.telephone}</td>
-          <td>${m.quartier}</td>
-          <td>${new Date(m.date_inscription).toLocaleDateString()}</td>
-        </tr>
-      `).join('');
+  <tr>
+    <td>${m.nom}</td>
+    <td>${m.telephone}</td>
+    <td>${m.quartier}</td>
+    <td>${new Date(m.date_inscription).toLocaleDateString()}</td>
+    <td><button onclick="supprimerMembre(${m.id})" style="background:#dc3545;width:auto;padding:5px 10px;border-radius:4px;">🗑️</button></td>
+  </tr>
+`).join('');
     }
 
     async function chargerSelectMembres() {
@@ -143,6 +144,21 @@
       });
       e.target.reset();
       chargerMembres();
+      async function supprimerMembre(id) {
+  if (!confirm('Supprimer ce membre et toutes ses cotisations ?')) return;
+  
+  const res = await fetch(`/api/membres/${id}`, { method: 'DELETE' });
+  const data = await res.json();
+  
+  if(data.error) {
+    alert('Erreur : ' + data.error);
+  } else {
+    alert('Membre supprimé !');
+    chargerMembres();
+    chargerStats();
+  }
+}
+
       alert('Membre ajouté !');
     };
 

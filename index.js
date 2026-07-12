@@ -78,7 +78,21 @@ app.get('/api/stats', (req, res) => {
     res.json(row);
   });
 });
-
+// API SUPPRIMER MEMBRE
+app.delete('/api/membres/:id', (req, res) => {
+  const id = req.params.id;
+  
+  // On supprime d'abord ses cotisations
+  db.run("DELETE FROM cotisations WHERE membre_id =?", [id], (err) => {
+    if (err) return res.json({ error: err.message });
+    
+    // Puis on supprime le membre
+    db.run("DELETE FROM membres WHERE id =?", [id], function(err) {
+      if (err) return res.json({ error: err.message });
+      res.json({ message: 'Membre supprimé!' });
+    });
+  });
+});
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

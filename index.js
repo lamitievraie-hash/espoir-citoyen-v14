@@ -41,6 +41,20 @@ initDB();
 
 // GET membres
 // EXPORT EXCEL DES MEMBRES
+// MODIFIER UN MEMBRE
+app.put('/api/membres/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nom, telephone, quartier } = req.body;
+    await pool.query(
+      'UPDATE membres SET nom = $1, telephone = $2, quartier = $3 WHERE id = $4',
+      [nom, telephone, quartier, id]
+    );
+    res.json({ message: 'Membre modifié' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get('/api/export/membres', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM membres ORDER BY nom ASC');

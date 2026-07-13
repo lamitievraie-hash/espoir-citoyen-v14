@@ -1,11 +1,9 @@
 const express = require('express');
-const cors = require('cors');
 const { Pool } = require('pg');
 const ExcelJS = require('exceljs');
 const path = require('path');
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -14,42 +12,28 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Création auto des tables
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS membres (
-      id SERIAL PRIMARY KEY,
-      nom TEXT NOT NULL,
-      telephone TEXT NOT NULL,
-      quartier TEXT NOT NULL,
-      date_inscription TIMESTAMP DEFAULT NOW()
-    )
-  `);
-  
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS cotisations (
-      id SERIAL PRIMARY KEY,
-      membre_id INTEGER REFERENCES membres(id) ON DELETE CASCADE,
-      montant INTEGER NOT NULL,
-      date_cotisation TIMESTAMP DEFAULT NOW()
-    )
-  `);
-  console.log('Tables PostgreSQL prêtes');
-}
+// CRÉER LA TABLE SI ELLE EXISTE PAS
+pool.query(`
+  CREATE TABLE IF NOT EXISTS membres (
+    id SERIAL PRIMARY KEY,
+    nom TEXT NOT NULL,
+    telephone TEXT,
+    quartier TEXT,
+    date_inscription TIMESTAMP DEFAULT NOW()
+  )
+`);
 
-initDB();
-
-// GET membres
+// 1. LISTER TOUS LES MEMBRES - OBLIGATOIRE SINON TABLEAU VIDE
 app.get('/api/membres', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM membres ORDER BY date_inscription DESC');
+    const result = await pool.query('SELECT * FROM membres ORDER BY id DESC');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// POST membre
+// 2. AJOUTER UN MEMBRE
 app.post('/api/membres', async (req, res) => {
   try {
     const { nom, telephone, quartier } = req.body;
@@ -63,7 +47,7 @@ app.post('/api/membres', async (req, res) => {
   }
 });
 
-// DELETE membre - UNE SEULE FOIS
+// 3. SUPPRIMER UN MEMBRE
 app.delete('/api/membres/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -74,82 +58,31 @@ app.delete('/api/membres/:id', async (req, res) => {
   }
 });
 
-// EXPORT EXCEL DES MEMBRES
+// 4. EXPORT EXCEL
 app.get('/api/export/membres', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM membres ORDER BY nom ASC');
-    
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Membres ESPOIR CITOYEN');
-    
+    const worksheet = workbook.addWorksheet('Membres');
+
     worksheet.columns = [
-      { header: 'ID', key: 'id', width: 8 },
-      { header: 'Nom Complet', key: 'nom', width: 30 },
-      { header: 'Téléphone', key: 'telephone', width: 18 },
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nom', key: 'nom', width: 30 },
+      { header: 'Téléphone', key: 'telephone', width: 20 },
       { header: 'Quartier', key: 'quartier', width: 25 },
       { header: 'Date Inscription', key: 'date_inscription', width: 20 }
     ];
-    
+
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
-    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    
-    result.rows.forEach(membre => {
-      worksheet.addRow({
-        id: membre.id,
-        nom: membre.nom,
-        telephone: membre.telephone,
-        quartier: membre.quartier,
-        date_inscription: new Date(membre.date_inscription).toLocaleDateString('fr-FR')
-      });
-    });
-    
-    worksheet.eachRow({ includeEmpty: false }, (row) => {
-      row.eachCell({ includeEmpty: false }, (cell) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-      });
-    });
-    
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF003366' } };
+
+    worksheet.addRows(result.rows);
+
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=Membres_ESPOIR_CITOYEN.xlsx');
-    
+    res.setHeader('Content-Disposition', 'attachment; filename=membres_espoir_citoyen.xlsx');
+
     await workbook.xlsx.write(res);
     res.end();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur export Excel' });
-  }
-});
-
-// GET cotisations
-app.get('/api/cotisations', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT c.id, c.montant, c.date_cotisation, m.nom 
-      FROM cotisations c 
-      JOIN membres m ON c.membre_id = m.id 
-      ORDER BY c.date_cotisation DESC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST cotisation
-app.post('/api/cotisations', async (req, res) => {
-  try {
-    const { membre_id, montant } = req.body;
-    await pool.query(
-      'INSERT INTO cotisations (membre_id, montant) VALUES ($1, $2)',
-      [membre_id, montant]
-    );
-    res.json({ message: 'Cotisation enregistrée' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -160,4 +93,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Serveur V14.3 sur port ${PORT}`));
+app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));

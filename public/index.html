@@ -45,7 +45,13 @@
         <button type="submit">Ajouter</button>
       </form>
       
-      <h3>Liste des membres</h3>
+      <div style="margin: 20px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+  <h3 style="margin: 0;">Liste des membres</h3>
+  <button onclick="window.open('/api/export/membres', '_blank')" 
+          style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    📊 Exporter Excel
+  </button>
+</div>
       <table id="tableMembres">
         <thead><tr><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th>Action</th></tr></thead>
         <tbody></tbody>

@@ -40,71 +40,6 @@ async function initDB() {
 initDB();
 
 // GET membres
-// EXPORT EXCEL DES MEMBRES
-
-// SUPPRIMER UN MEMBRE
-app.delete('/api/membres/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await pool.query('DELETE FROM membres WHERE id = $1', [id]);
-    res.json({ message: 'Membre supprimé' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-app.get('/api/export/membres', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM membres ORDER BY nom ASC');
-    
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Membres ESPOIR CITOYEN');
-    
-    worksheet.columns = [
-      { header: 'ID', key: 'id', width: 8 },
-      { header: 'Nom Complet', key: 'nom', width: 30 },
-      { header: 'Téléphone', key: 'telephone', width: 18 },
-      { header: 'Quartier', key: 'quartier', width: 25 },
-      { header: 'Date Inscription', key: 'date_inscription', width: 20 }
-    ];
-    
-    // Style en-tête bleu
-    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
-    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-    
-    // Données
-    result.rows.forEach(membre => {
-      worksheet.addRow({
-        id: membre.id,
-        nom: membre.nom,
-        telephone: membre.telephone,
-        quartier: membre.quartier,
-        date_inscription: new Date(membre.date_inscription).toLocaleDateString('fr-FR')
-      });
-    });
-    
-    // Bordures
-    worksheet.eachRow({ includeEmpty: false }, (row) => {
-      row.eachCell({ includeEmpty: false }, (cell) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-      });
-    });
-    
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=Membres_ESPOIR_CITOYEN.xlsx');
-    
-    await workbook.xlsx.write(res);
-    res.end();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erreur export Excel' });
-  }
-});
 app.get('/api/membres', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM membres ORDER BY date_inscription DESC');
@@ -128,7 +63,7 @@ app.post('/api/membres', async (req, res) => {
   }
 });
 
-// DELETE membre
+// DELETE membre - UNE SEULE FOIS
 app.delete('/api/membres/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -136,6 +71,58 @@ app.delete('/api/membres/:id', async (req, res) => {
     res.json({ message: 'Membre supprimé' });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// EXPORT EXCEL DES MEMBRES
+app.get('/api/export/membres', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM membres ORDER BY nom ASC');
+    
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Membres ESPOIR CITOYEN');
+    
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 8 },
+      { header: 'Nom Complet', key: 'nom', width: 30 },
+      { header: 'Téléphone', key: 'telephone', width: 18 },
+      { header: 'Quartier', key: 'quartier', width: 25 },
+      { header: 'Date Inscription', key: 'date_inscription', width: 20 }
+    ];
+    
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+    worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    result.rows.forEach(membre => {
+      worksheet.addRow({
+        id: membre.id,
+        nom: membre.nom,
+        telephone: membre.telephone,
+        quartier: membre.quartier,
+        date_inscription: new Date(membre.date_inscription).toLocaleDateString('fr-FR')
+      });
+    });
+    
+    worksheet.eachRow({ includeEmpty: false }, (row) => {
+      row.eachCell({ includeEmpty: false }, (cell) => {
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    });
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Membres_ESPOIR_CITOYEN.xlsx');
+    
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur export Excel' });
   }
 });
 
@@ -168,23 +155,9 @@ app.post('/api/cotisations', async (req, res) => {
   }
 });
 
-// GET stats
-app.get('/api/stats', async (req, res) => {
-  try {
-    const membres = await pool.query('SELECT COUNT(*) FROM membres');
-    const cotisations = await pool.query('SELECT COALESCE(SUM(montant), 0) as total FROM cotisations');
-    res.json({
-      total_membres: parseInt(membres.rows[0].count),
-      total_cotisations: parseInt(cotisations.rows[0].total)
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Serveur V14.2 Postgres sur port ${PORT}`));
+app.listen(PORT, () => console.log(`Serveur V14.3 sur port ${PORT}`));

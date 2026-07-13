@@ -7,33 +7,45 @@
   <style>
     body { font-family: Arial; max-width: 1200px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
     h1 { color: #003366; text-align: center; }
-   .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-   .app { display: none; }
-   .header { display: flex; justify-content: space-between; align-items: center; }
-   .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0; }
-   .stat-box { background: #003366; color: white; padding: 20px; border-radius: 8px; text-align: center; }
-   .stat-box h3 { margin: 0; font-size: 14px; opacity: 0.8; }
-   .stat-box p { margin: 10px 0 0; font-size: 28px; font-weight: bold; }
-   .chart-container { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-   .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #003366; }
-   .tab { padding: 10px 20px; cursor: pointer; background: #eee; border: none; font-size: 16px; }
-   .tab.active { background: #003366; color: white; }
-   .content { display: none; background: white; padding: 20px; border-radius: 8px; }
-   .content.active { display: block; }
+  .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .app { display: none; }
+  .header { display: flex; justify-content: space-between; align-items: center; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .stat-box { background: #003366; color: white; padding: 20px; border-radius: 8px; text-align: center; }
+  .stat-box h3 { margin: 0; font-size: 14px; opacity: 0.8; }
+  .stat-box p { margin: 10px 0 0; font-size: 28px; font-weight: bold; }
+  .chart-container { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #003366; }
+  .tab { padding: 10px 20px; cursor: pointer; background: #eee; border: none; font-size: 16px; }
+  .tab.active { background: #003366; color: white; }
+  .content { display: none; background: white; padding: 20px; border-radius: 8px; }
+  .content.active { display: block; }
     input, select, button { padding: 10px; margin: 5px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; }
     button { background: #003366; color: white; border: none; cursor: pointer; }
-   .btn-export { background: #059669; width: auto; margin-bottom: 15px; }
-   .btn-edit { background: #F59E0B; }
-   .btn-delete { background: #EF4444; }
-   .btn-logout { background: #6B7280; }
+  .btn-export { background: #059669; }
+  .btn-edit { background: #F59E0B; }
+  .btn-delete { background: #EF4444; }
+  .btn-logout { background: #6B7280; }
+  .btn-whatsapp { background: #25D366; }
+  .btn-print { background: #0EA5E9; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     td, th { border: 1px solid #ddd; padding: 12px; text-align: left; }
     th { background: #003366; color: white; }
-   .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
-   .actions { display: flex; gap: 5px; }
-   .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-   .modal-content { background: white; margin: 10% auto; padding: 20px; width: 400px; border-radius: 8px; }
-   .search-box { width: 300px; }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
+  .actions { display: flex; gap: 5px; }
+  .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+  .modal-content { background: white; margin: 5% auto; padding: 20px; width: 500px; border-radius: 8px; }
+  .search-box { width: 300px; }
+  .photo-membre { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+  .photo-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 10px 0; }
+
+   @media print {
+    .no-print,.tabs,.form-row,.stats,.chart-container,.header,.actions { display: none!important; }
+     body { background: white; }
+    .content { display: block!important; }
+     h1 { color: black; }
+     th { background: #ccc!important; color: black!important; }
+   }
   </style>
 </head>
 <body>
@@ -48,57 +60,67 @@
 
   <!-- APP -->
   <div id="app" class="app">
-    <div class="header">
+    <div class="header no-print">
       <h1>🇨🇮 ESPOIR CITOYEN V14</h1>
       <button class="btn-logout" onclick="logout()">Déconnexion</button>
     </div>
 
-    <div class="stats">
+    <div class="stats no-print">
       <div class="stat-box"><h3>TOTAL MEMBRES</h3><p id="totalMembres">0</p></div>
       <div class="stat-box"><h3>TOTAL COTISATIONS</h3><p id="totalCotisations">0 FCFA</p></div>
       <div class="stat-box"><h3>QUARTIERS ACTIFS</h3><p id="totalQuartiers">0</p></div>
     </div>
 
-    <div class="chart-container">
+    <div class="chart-container no-print">
       <h3>Répartition des cotisations par quartier</h3>
       <canvas id="chartQuartier"></canvas>
     </div>
 
-    <div class="tabs">
+    <div class="tabs no-print">
       <button class="tab active" onclick="openTab('membres')">Membres</button>
       <button class="tab" onclick="openTab('cotisations')">Cotisations</button>
     </div>
 
     <!-- MEMBRES -->
     <div id="membres" class="content active">
-      <h2>Gestion des membres</h2>
-      <div class="form-row">
-        <input id="nom" placeholder="Nom complet">
-        <input id="telephone" placeholder="Téléphone">
-        <input id="quartier" placeholder="Quartier">
-        <button onclick="ajouterMembre()">Ajouter</button>
+      <h2 class="no-print">Gestion des membres</h2>
+      <h2 class="print-only" style="display:none;">Liste des Membres - ESPOIR CITOYEN</h2>
+
+      <form id="formMembre" class="form-row no-print" enctype="multipart/form-data">
+        <input id="nom" name="nom" placeholder="Nom complet" required>
+        <input id="telephone" name="telephone" placeholder="Téléphone WhatsApp">
+        <input id="quartier" name="quartier" placeholder="Quartier">
+        <input type="file" id="photo" name="photo" accept="image/*">
+        <button type="submit">Ajouter</button>
+      </form>
+
+      <div class="form-row no-print">
+        <input id="search" class="search-box" placeholder="🔍 Rechercher..." onkeyup="rechercherMembres()">
+        <button class="btn-export" onclick="exporterMembres()">📊 Export Excel</button>
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimer</button>
       </div>
-      <div class="form-row">
-        <input id="search" class="search-box" placeholder="🔍 Rechercher nom, tel, quartier..." onkeyup="rechercherMembres()">
-        <button class="btn-export" onclick="exporterMembres()">📊 Export Membres Excel</button>
-      </div>
-      <table>
-        <thead><tr><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th>Actions</th></tr></thead>
+
+      <table id="tableMembres">
+        <thead><tr><th>Photo</th><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th class="no-print">Actions</th></tr></thead>
         <tbody id="listeMembres"></tbody>
       </table>
     </div>
 
     <!-- COTISATIONS -->
     <div id="cotisations" class="content">
-      <h2>Gestion des cotisations</h2>
-      <div class="form-row">
+      <h2 class="no-print">Gestion des cotisations</h2>
+      <h2 class="print-only" style="display:none;">Historique Cotisations - ESPOIR CITOYEN</h2>
+
+      <div class="form-row no-print">
         <select id="membre_id"><option value="">Choisir un membre</option></select>
         <input id="montant" type="number" placeholder="Montant FCFA">
         <button onclick="ajouterCotisation()">Enregistrer</button>
-        <button class="btn-export" onclick="exporterCotisations()">📊 Export Cotisations Excel</button>
+        <button class="btn-export" onclick="exporterCotisations()">📊 Export Excel</button>
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimer</button>
       </div>
-      <table>
-        <thead><tr><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th>Action</th></tr></thead>
+
+      <table id="tableCotisations">
+        <thead><tr><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th class="no-print">Actions</th></tr></thead>
         <tbody id="listeCotisations"></tbody>
       </table>
     </div>
@@ -108,12 +130,17 @@
   <div id="modalEdit" class="modal">
     <div class="modal-content">
       <h3>Modifier le membre</h3>
-      <input type="hidden" id="edit_id">
-      <input id="edit_nom" placeholder="Nom complet" style="width: 95%;"><br>
-      <input id="edit_telephone" placeholder="Téléphone" style="width: 95%;"><br>
-      <input id="edit_quartier" placeholder="Quartier" style="width: 95%;"><br><br>
-      <button onclick="validerModification()">Enregistrer</button>
-      <button onclick="fermerModal()" style="background: #6B7280;">Annuler</button>
+      <form id="formEditMembre" enctype="multipart/form-data">
+        <input type="hidden" id="edit_id" name="id">
+        <input type="hidden" id="photo_existante" name="photo_existante">
+        <img id="previewPhoto" class="photo-preview" src="" style="display:none;">
+        <input id="edit_nom" name="nom" placeholder="Nom complet" style="width: 95%;" required><br>
+        <input id="edit_telephone" name="telephone" placeholder="Téléphone WhatsApp" style="width: 95%;"><br>
+        <input id="edit_quartier" name="quartier" placeholder="Quartier" style="width: 95%;"><br>
+        <input type="file" id="edit_photo" name="photo" accept="image/*" style="width: 95%;"><br><br>
+        <button type="submit">Enregistrer</button>
+        <button type="button" onclick="fermerModal()" style="background: #6B7280;">Annuler</button>
+      </form>
     </div>
   </div>
 
@@ -158,6 +185,7 @@
       document.getElementById(tabName).classList.add('active');
       event.target.classList.add('active');
       if(tabName === 'cotisations') chargerCotisations();
+      document.querySelectorAll('.print-only').forEach(el => el.style.display = 'none');
     }
 
     // ===== INIT =====
@@ -174,7 +202,6 @@
       document.getElementById('totalCotisations').textContent = data.total_cotisations.toLocaleString() + ' FCFA';
       document.getElementById('totalQuartiers').textContent = data.graphique_quartier.length;
 
-      // Graphique Camembert
       const ctx = document.getElementById('chartQuartier');
       if (chartQuartier) chartQuartier.destroy();
       chartQuartier = new Chart(ctx, {
@@ -183,7 +210,7 @@
           labels: data.graphique_quartier.map(q => q.quartier),
           datasets: [{
             data: data.graphique_quartier.map(q => q.total),
-            backgroundColor: ['#003366', '#059669', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
+            backgroundColor: ['#003366', '#059669', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#10B981', '#3B82F6']
           }]
         },
         options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
@@ -196,11 +223,13 @@
       const data = await res.json();
       document.getElementById('listeMembres').innerHTML = data.map(m => `
         <tr>
+          <td>${m.photo? `<img src="/uploads/${m.photo}" class="photo-membre">` : '👤'}</td>
           <td>${m.nom}</td>
           <td>${m.telephone}</td>
           <td>${m.quartier}</td>
           <td>${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</td>
-          <td class="actions">
+          <td class="actions no-print">
+            <button class="btn-whatsapp" onclick="ouvrirWhatsApp('${m.telephone}', '${m.nom}')">💚</button>
             <button class="btn-edit" onclick='ouvrirModal(${JSON.stringify(m)})'>✏️</button>
             <button class="btn-delete" onclick="supprimerMembre(${m.id})">🗑️</button>
           </td>
@@ -210,32 +239,39 @@
       chargerStats();
     }
 
+    function ouvrirWhatsApp(tel, nom) {
+      if (!tel) return alert('Pas de numéro WhatsApp');
+      const numero = tel.replace(/\s/g, '').replace('+', '');
+      const message = encodeURIComponent(`Bonjour ${nom}, message de ESPOIR CITOYEN 🇨🇮`);
+      window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
+    }
+
     function rechercherMembres() {
       const search = document.getElementById('search').value;
       chargerMembres(search);
     }
 
-    async function ajouterMembre() {
-      const nom = document.getElementById('nom').value;
-      const telephone = document.getElementById('telephone').value;
-      const quartier = document.getElementById('quartier').value;
-      if (!nom) return alert('Nom obligatoire');
-      await fetch('/api/membres', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, telephone, quartier })
-      });
-      document.getElementById('nom').value = '';
-      document.getElementById('telephone').value = '';
-      document.getElementById('quartier').value = '';
+    document.getElementById('formMembre').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      await fetch('/api/membres', { method: 'POST', body: formData });
+      e.target.reset();
       chargerMembres();
-    }
+    });
 
     function ouvrirModal(membre) {
       document.getElementById('edit_id').value = membre.id;
       document.getElementById('edit_nom').value = membre.nom;
       document.getElementById('edit_telephone').value = membre.telephone;
       document.getElementById('edit_quartier').value = membre.quartier;
+      document.getElementById('photo_existante').value = membre.photo || '';
+      const preview = document.getElementById('previewPhoto');
+      if (membre.photo) {
+        preview.src = `/uploads/${membre.photo}`;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
       document.getElementById('modalEdit').style.display = 'block';
     }
 
@@ -243,19 +279,14 @@
       document.getElementById('modalEdit').style.display = 'none';
     }
 
-    async function validerModification() {
+    document.getElementById('formEditMembre').addEventListener('submit', async (e) => {
+      e.preventDefault();
       const id = document.getElementById('edit_id').value;
-      const nom = document.getElementById('edit_nom').value;
-      const telephone = document.getElementById('edit_telephone').value;
-      const quartier = document.getElementById('edit_quartier').value;
-      await fetch(`/api/membres/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, telephone, quartier })
-      });
+      const formData = new FormData(e.target);
+      await fetch(`/api/membres/${id}`, { method: 'PUT', body: formData });
       fermerModal();
       chargerMembres();
-    }
+    });
 
     async function supprimerMembre(id) {
       if (confirm('Supprimer ce membre?')) {
@@ -285,21 +316,41 @@
           <td>${c.quartier}</td>
           <td>${c.montant.toLocaleString()} FCFA</td>
           <td>${new Date(c.date_cotisation).toLocaleDateString('fr-FR')}</td>
-          <td><button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑️</button></td>
+          <td class="no-print">
+            <button class="btn-whatsapp" onclick="envoyerRecuWhatsApp('${c.telephone}', '${c.nom}', ${c.montant})">💚 Recu</button>
+            <button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑️</button>
+          </td>
         </tr>
       `).join('');
       chargerStats();
+    }
+
+    function envoyerRecuWhatsApp(tel, nom, montant) {
+      if (!tel) return alert('Pas de numéro WhatsApp');
+      const numero = tel.replace(/\s/g, '').replace('+', '');
+      const message = encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${nom},\nNous confirmons la réception de votre cotisation de ${montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+      window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
     }
 
     async function ajouterCotisation() {
       const membre_id = document.getElementById('membre_id').value;
       const montant = document.getElementById('montant').value;
       if (!membre_id ||!montant) return alert('Choisis un membre et un montant');
-      await fetch('/api/cotisations', {
+
+      const res = await fetch('/api/cotisations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ membre_id, montant })
       });
+      const data = await res.json();
+
+      // Ouvre WhatsApp auto après enregistrement
+      if (data.whatsapp && data.whatsapp.telephone) {
+        const numero = data.whatsapp.telephone.replace(/\s/g, '').replace('+', '');
+        const message = encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${data.whatsapp.nom},\nNous confirmons la réception de votre cotisation de ${data.whatsapp.montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+        window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
+      }
+
       document.getElementById('montant').value = '';
       chargerCotisations();
     }

@@ -41,16 +41,13 @@ initDB();
 
 // GET membres
 // EXPORT EXCEL DES MEMBRES
-// MODIFIER UN MEMBRE
-app.put('/api/membres/:id', async (req, res) => {
+
+// SUPPRIMER UN MEMBRE
+app.delete('/api/membres/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nom, telephone, quartier } = req.body;
-    await pool.query(
-      'UPDATE membres SET nom = $1, telephone = $2, quartier = $3 WHERE id = $4',
-      [nom, telephone, quartier, id]
-    );
-    res.json({ message: 'Membre modifié' });
+    await pool.query('DELETE FROM membres WHERE id = $1', [id]);
+    res.json({ message: 'Membre supprimé' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

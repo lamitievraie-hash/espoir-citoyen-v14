@@ -5,6 +5,8 @@ const path = require('path');
 const session = require('express-session');
 const multer = require('multer');
 const fs = require('fs');
+const PDFDocument = require('pdfkit');
+const QRCode = require('qrcode');
 const app = express();
 
 app.use(express.json());
@@ -22,7 +24,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// MULTER POUR PHOTOS
 if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 const storage = multer.diskStorage({
   destination: 'uploads/',
@@ -30,8 +31,18 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// INIT DB
+// ===== INIT DB V14.7 =====
 async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'secretaire',
+      nom TEXT,
+      date_creation TIMESTAMP DEFAULT NOW()
+    )
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS membres (
       id SERIAL PRIMARY KEY,
@@ -51,28 +62,71 @@ async function initDB() {
     )
   `);
   await pool.query(`ALTER TABLE membres ADD COLUMN IF NOT EXISTS photo TEXT`);
+
+  // Créer Super Admin si existe pas
+  if (process.env.SUPER_ADMIN_EMAIL) {
+    const existe = await pool.query('SELECT * FROM admins WHERE email = $1', [process.env.SUPER_ADMIN_EMAIL]);
+    if (existe.rows.length === 0) {
+      await pool.query('INSERT INTO admins (email, password, role, nom) VALUES ($1, $2, $3, $4)',
+        [process.env.SUPER_ADMIN_EMAIL, process.env.ADMIN_PASSWORD || 'admin2026', 'super_admin', 'Super Admin']);
+    }
+  }
 }
 initDB();
 
+// ===== MIDDLEWARE AUTH + ROLES =====
 const requireAuth = (req, res, next) => {
   if (req.session.loggedIn) next();
   else res.status(401).json({ error: 'Non autorisé' });
 };
 
-// ===== AUTH =====
-app.post('/api/login', (req, res) => {
-  const { password } = req.body;
-  if (password === (process.env.ADMIN_PASSWORD || 'admin2026')) {
+const requireRole = (roles) => (req, res, next) => {
+  if (req.session.loggedIn && roles.includes(req.session.role)) next();
+  else res.status(403).json({ error: 'Accès refusé' });
+};
+
+// ===== AUTH MULTI-ADMIN =====
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  const result = await pool.query('SELECT * FROM admins WHERE email = $1 AND password = $2', [email, password]);
+  if (result.rows.length > 0) {
     req.session.loggedIn = true;
-    res.json({ success: true });
+    req.session.role = result.rows[0].role;
+    req.session.admin_id = result.rows[0].id;
+    req.session.nom = result.rows[0].nom;
+    res.json({ success: true, role: result.rows[0].role, nom: result.rows[0].nom });
   } else {
-    res.status(401).json({ error: 'Mot de passe incorrect' });
+    res.status(401).json({ error: 'Email ou mot de passe incorrect' });
   }
 });
-app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
-app.get('/api/check-auth', (req, res) => { res.json({ loggedIn:!!req.session.loggedIn }); });
 
-// ===== MEMBRES AVEC PHOTO =====
+app.post('/api/logout', (req, res) => { req.session.destroy(); res.json({ success: true }); });
+app.get('/api/check-auth', (req, res) => {
+  res.json({ loggedIn:!!req.session.loggedIn, role: req.session.role, nom: req.session.nom });
+});
+
+// ===== GESTION ADMINS - Super Admin only =====
+app.get('/api/admins', requireAuth, requireRole(['super_admin']), async (req, res) => {
+  const result = await pool.query('SELECT id, email, role, nom, date_creation FROM admins ORDER BY id DESC');
+  res.json(result.rows);
+});
+
+app.post('/api/admins', requireAuth, requireRole(['super_admin']), async (req, res) => {
+  const { email, password, role, nom } = req.body;
+  try {
+    await pool.query('INSERT INTO admins (email, password, role, nom) VALUES ($1, $2, $3, $4)', [email, password, role, nom]);
+    res.json({ message: 'Admin ajouté' });
+  } catch (e) {
+    res.status(400).json({ error: 'Email déjà utilisé' });
+  }
+});
+
+app.delete('/api/admins/:id', requireAuth, requireRole(['super_admin']), async (req, res) => {
+  await pool.query('DELETE FROM admins WHERE id = $1 AND role!= $2', [req.params.id, 'super_admin']);
+  res.json({ message: 'Admin supprimé' });
+});
+
+// ===== MEMBRES =====
 app.get('/api/membres', requireAuth, async (req, res) => {
   const { search } = req.query;
   let query = 'SELECT * FROM membres';
@@ -86,14 +140,14 @@ app.get('/api/membres', requireAuth, async (req, res) => {
   res.json(result.rows);
 });
 
-app.post('/api/membres', requireAuth, upload.single('photo'), async (req, res) => {
+app.post('/api/membres', requireAuth, requireRole(['super_admin', 'secretaire']), upload.single('photo'), async (req, res) => {
   const { nom, telephone, quartier } = req.body;
   const photo = req.file? req.file.filename : null;
   await pool.query('INSERT INTO membres (nom, telephone, quartier, photo) VALUES ($1, $2, $3, $4)', [nom, telephone, quartier, photo]);
   res.json({ message: 'Membre ajouté' });
 });
 
-app.put('/api/membres/:id', requireAuth, upload.single('photo'), async (req, res) => {
+app.put('/api/membres/:id', requireAuth, requireRole(['super_admin', 'secretaire']), upload.single('photo'), async (req, res) => {
   const { id } = req.params;
   const { nom, telephone, quartier } = req.body;
   const photo = req.file? req.file.filename : req.body.photo_existante;
@@ -101,17 +155,28 @@ app.put('/api/membres/:id', requireAuth, upload.single('photo'), async (req, res
   res.json({ message: 'Membre modifié' });
 });
 
-app.delete('/api/membres/:id', requireAuth, async (req, res) => {
-  const { id } = req.params;
-  const membre = await pool.query('SELECT photo FROM membres WHERE id = $1', [id]);
+app.delete('/api/membres/:id', requireAuth, requireRole(['super_admin']), async (req, res) => {
+  const membre = await pool.query('SELECT photo FROM membres WHERE id = $1', [req.params.id]);
   if (membre.rows[0]?.photo) {
     try { fs.unlinkSync(`uploads/${membre.rows[0].photo}`); } catch(e){}
   }
-  await pool.query('DELETE FROM membres WHERE id = $1', [id]);
+  await pool.query('DELETE FROM membres WHERE id = $1', [req.params.id]);
   res.json({ message: 'Membre supprimé' });
 });
 
-// ===== COTISATIONS + WHATSAPP =====
+// ===== CARTE MEMBRE AVEC QR CODE =====
+app.get('/api/membre/:id/carte', requireAuth, async (req, res) => {
+  const membre = await pool.query('SELECT * FROM membres WHERE id = $1', [req.params.id]);
+  if (membre.rows.length === 0) return res.status(404).send('Membre introuvable');
+
+  const m = membre.rows[0];
+  const qrData = `ESPOIR CITOYEN\nID: ${m.id}\nNom: ${m.nom}\nTel: ${m.telephone}\nQuartier: ${m.quartier}`;
+  const qrCodeDataURL = await QRCode.toDataURL(qrData, { width: 200 });
+
+  res.json({ membre: m, qrcode: qrCodeDataURL });
+});
+
+// ===== COTISATIONS =====
 app.get('/api/cotisations', requireAuth, async (req, res) => {
   const result = await pool.query(`
     SELECT c.id, c.montant, c.date_cotisation, m.nom, m.quartier, m.telephone
@@ -122,11 +187,9 @@ app.get('/api/cotisations', requireAuth, async (req, res) => {
   res.json(result.rows);
 });
 
-app.post('/api/cotisations', requireAuth, async (req, res) => {
+app.post('/api/cotisations', requireAuth, requireRole(['super_admin', 'tresorier']), async (req, res) => {
   const { membre_id, montant } = req.body;
   await pool.query('INSERT INTO cotisations (membre_id, montant) VALUES ($1, $2)', [membre_id, montant]);
-
-  // On renvoie les infos pour WhatsApp
   const membre = await pool.query('SELECT nom, telephone FROM membres WHERE id = $1', [membre_id]);
   res.json({
     message: 'Cotisation enregistrée',
@@ -138,12 +201,12 @@ app.post('/api/cotisations', requireAuth, async (req, res) => {
   });
 });
 
-app.delete('/api/cotisations/:id', requireAuth, async (req, res) => {
+app.delete('/api/cotisations/:id', requireAuth, requireRole(['super_admin', 'tresorier']), async (req, res) => {
   await pool.query('DELETE FROM cotisations WHERE id = $1', [req.params.id]);
   res.json({ message: 'Cotisation supprimée' });
 });
 
-// ===== STATS =====
+// ===== STATS + STATS MOIS =====
 app.get('/api/stats', requireAuth, async (req, res) => {
   const membres = await pool.query('SELECT COUNT(*) FROM membres');
   const cotisations = await pool.query('SELECT COALESCE(SUM(montant), 0) as total FROM cotisations');
@@ -153,11 +216,87 @@ app.get('/api/stats', requireAuth, async (req, res) => {
     LEFT JOIN cotisations c ON m.id = c.membre_id
     GROUP BY m.quartier HAVING m.quartier IS NOT NULL AND m.quartier!= ''
   `);
+  const parMois = await pool.query(`
+    SELECT
+      TO_CHAR(date_cotisation, 'YYYY-MM') as mois,
+      COALESCE(SUM(montant), 0) as total
+    FROM cotisations
+    WHERE date_cotisation >= NOW() - INTERVAL '12 months'
+    GROUP BY TO_CHAR(date_cotisation, 'YYYY-MM')
+    ORDER BY mois ASC
+  `);
   res.json({
     total_membres: parseInt(membres.rows[0].count),
     total_cotisations: parseInt(cotisations.rows[0].total),
-    graphique_quartier: parQuartier.rows
+    graphique_quartier: parQuartier.rows,
+    graphique_mois: parMois.rows
   });
+});
+
+// ===== PDF TABLEAU DE BORD =====
+app.get('/api/export/pdf-dashboard', requireAuth, async (req, res) => {
+  const stats = await pool.query('SELECT COUNT(*) as total_membres FROM membres');
+  const cotisations = await pool.query('SELECT COALESCE(SUM(montant), 0) as total FROM cotisations');
+  const parQuartier = await pool.query(`
+    SELECT m.quartier, COALESCE(SUM(c.montant), 0) as total
+    FROM membres m
+    LEFT JOIN cotisations c ON m.id = c.membre_id
+    GROUP BY m.quartier HAVING m.quartier IS NOT NULL AND m.quartier!= ''
+  `);
+  const parMois = await pool.query(`
+    SELECT TO_CHAR(date_cotisation, 'Month YYYY') as mois, COALESCE(SUM(montant), 0) as total
+    FROM cotisations
+    WHERE date_cotisation >= NOW() - INTERVAL '6 months'
+    GROUP BY TO_CHAR(date_cotisation, 'Month YYYY'), date_trunc('month', date_cotisation)
+    ORDER BY date_trunc('month', date_cotisation) DESC
+  `);
+
+  const doc = new PDFDocument({ size: 'A4', margin: 50 });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename=tableau_bord_espoir_citoyen.pdf');
+  doc.pipe(res);
+
+  // Logo
+  if (fs.existsSync('public/logo.png')) {
+    doc.image('public/logo.png', 50, 45, { width: 80 });
+  }
+
+  // Titre
+  doc.fontSize(20).fillColor('#003366').text('ONG ESPOIR CITOYEN', 150, 50);
+  doc.fontSize(14).fillColor('black').text('Tableau de Bord - ' + new Date().toLocaleDateString('fr-FR'), 150, 75);
+  doc.moveDown(2);
+
+  // Stats
+  doc.fontSize(16).fillColor('#003366').text('Statistiques Générales', 50, 150);
+  doc.fontSize(12).fillColor('black');
+  doc.text(`Total Membres: ${stats.rows[0].total_membres}`, 50, 180);
+  doc.text(`Total Cotisations: ${parseInt(cotisations.rows[0].total).toLocaleString()} FCFA`, 50, 200);
+  doc.text(`Quartiers Actifs: ${parQuartier.rows.length}`, 50, 220);
+  doc.moveDown(2);
+
+  // Par quartier
+  doc.fontSize(16).fillColor('#003366').text('Répartition par Quartier', 50, 270);
+  doc.fontSize(12).fillColor('black');
+  let y = 300;
+  parQuartier.rows.forEach(q => {
+    doc.text(`${q.quartier}: ${parseInt(q.total).toLocaleString()} FCFA`, 50, y);
+    y += 20;
+    if (y > 700) { doc.addPage(); y = 50; }
+  });
+
+  // Par mois
+  y += 20;
+  if (y > 650) { doc.addPage(); y = 50; }
+  doc.fontSize(16).fillColor('#003366').text('Cotisations des 6 derniers mois', 50, y);
+  y += 30;
+  doc.fontSize(12).fillColor('black');
+  parMois.rows.forEach(m => {
+    doc.text(`${m.mois.trim()}: ${parseInt(m.total).toLocaleString()} FCFA`, 50, y);
+    y += 20;
+  });
+
+  doc.fontSize(10).fillColor('grey').text('Document généré automatiquement par ESPOIR CITOYEN V14.7', 50, 750);
+  doc.end();
 });
 
 // ===== EXPORT EXCEL =====
@@ -211,4 +350,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Serveur V14.6 sur port ${PORT}`));
+app.listen(PORT, () => console.log(`Serveur V14.7 sur port ${PORT}`));

@@ -2,7 +2,14 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>ESPOIR CITOYEN V14.7</title>
+  <title>ESPOIR CITOYEN V15.0</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ESPOIR CITOYEN">
+  <link rel="apple-touch-icon" href="/logo.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: Arial; max-width: 1400px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
@@ -66,7 +73,7 @@
 <body>
   <!-- LOGIN -->
   <div id="loginBox" class="login-box">
-    <h2>🇨🇮 ESPOIR CITOYEN V14.7</h2>
+    <h2>🇨🇮 ESPOIR CITOYEN V15.0</h2>
     <p>Connexion Administrateur</p>
     <input type="email" id="email" placeholder="Email" style="width: 95%; margin-bottom: 10px;">
     <input type="password" id="password" placeholder="Mot de passe" style="width: 95%;">
@@ -78,7 +85,7 @@
   <div id="app" class="app">
     <div class="header no-print">
       <div>
-        <h1>🇨🇮 ESPOIR CITOYEN V14.7</h1>
+        <h1>🇨🇮 ESPOIR CITOYEN V15.0</h1>
         <div class="user-info" id="userInfo"></div>
       </div>
       <div>
@@ -124,7 +131,7 @@
       <div class="form-row no-print">
         <input id="search" class="search-box" placeholder="🔍 Rechercher..." onkeyup="rechercherMembres()">
         <button class="btn-export" onclick="exporterMembres()">📊 Export Excel</button>
-        <button class="btn-print" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer</button>
       </div>
       <table id="tableMembres">
         <thead><tr><th>Photo</th><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th class="no-print">Actions</th></tr></thead>
@@ -140,7 +147,7 @@
         <input id="montant" type="number" placeholder="Montant FCFA">
         <button onclick="ajouterCotisation()">Enregistrer</button>
         <button class="btn-export" onclick="exporterCotisations()">📊 Export Excel</button>
-        <button class="btn-print" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer</button>
       </div>
       <table id="tableCotisations">
         <thead><tr><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th class="no-print">Actions</th></tr></thead>
@@ -193,7 +200,7 @@
       <h3 class="no-print">Carte de Membre</h3>
       <div id="carteMembre" class="carte-membre"></div>
       <div class="no-print" style="margin-top: 15px; text-align: center;">
-        <button class="btn-print" onclick="window.print()">🖨️ Imprimer la carte</button>
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer la carte</button>
         <button onclick="fermerModal('modalCarte')" style="background: #6B7280;">Fermer</button>
       </div>
     </div>
@@ -203,6 +210,15 @@
     let chartQuartier = null;
     let chartMois = null;
     let userRole = '';
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('PWA active'))
+          .catch(err => console.log('SW erreur'));
+      });
+    }
 
     async function checkAuth() {
       const res = await fetch('/api/check-auth');
@@ -306,8 +322,8 @@
           <td class="actions no-print">
             <button class="btn-carte" onclick="voirCarte(${m.id})" title="Carte">💳</button>
             <button class="btn-whatsapp" onclick="ouvrirWhatsApp('${m.telephone}', '${m.nom}')" title="WhatsApp">💚</button>
-            ${userRole !== 'tresorier' ? `<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m)})' title="Modifier">✏️</button>` : ''}
-            ${userRole === 'super_admin' ? `<button class="btn-delete" onclick="supprimerMembre(${m.id})" title="Supprimer">🗑️</button>` : ''}
+            ${userRole !== 'tresorier' ? `<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m)})' title="Modifier">✏</button>` : ''}
+            ${userRole === 'super_admin' ? `<button class="btn-delete" onclick="supprimerMembre(${m.id})" title="Supprimer">🗑</button>` : ''}
           </td>
         </tr>
       `).join('');
@@ -411,7 +427,7 @@
           <td>${new Date(c.date_cotisation).toLocaleDateString('fr-FR')}</td>
           <td class="no-print">
             <button class="btn-whatsapp" onclick="envoyerRecuWhatsApp('${c.telephone}', '${c.nom}', ${c.montant})">💚 Recu</button>
-            ${userRole !== 'secretaire' ? `<button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑️</button>` : ''}
+            ${userRole !== 'secretaire' ? `<button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑</button>` : ''}
           </td>
         </tr>
       `).join('');
@@ -466,7 +482,7 @@
           <td><span class="role-badge role-${a.role}">${a.role}</span></td>
           <td>${new Date(a.date_creation).toLocaleDateString('fr-FR')}</td>
           <td class="no-print">
-            ${a.role !== 'super_admin' ? `<button class="btn-delete" onclick="supprimerAdmin(${a.id})">🗑️</button>` : ''}
+            ${a.role !== 'super_admin' ? `<button class="btn-delete" onclick="supprimerAdmin(${a.id})">🗑</button>` : ''}
           </td>
         </tr>
       `).join('');

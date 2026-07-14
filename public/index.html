@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/logo.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; max-width: 1400px; margin: 20px auto; padding: 20px; background: #f5f5; }
+    body { font-family: Arial; max-width: 1400px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
     h1 { color: #003366; text-align: center; }
     .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .app { display: none; }
@@ -61,7 +61,6 @@
     .role-super_admin { background: #DC2626; }
     .role-tresorier { background: #059669; }
     .role-secretaire { background: #0EA5E9; }
-
     @media print {
       .no-print, .tabs, .form-row, .stats, .charts, .header, .actions { display: none!important; }
       body { background: white; }
@@ -73,7 +72,6 @@
   </style>
 </head>
 <body>
-  <!-- LOGIN -->
   <div id="loginBox" class="login-box">
     <h2>🇨🇮 ESPOIR CITOYEN V15.1</h2>
     <p>Connexion Administrateur</p>
@@ -82,8 +80,6 @@
     <button onclick="login()" style="width: 100%; margin-top: 10px;">Se connecter</button>
     <p id="loginError" style="color: red; display: none;">Email ou mot de passe incorrect</p>
   </div>
-
-  <!-- APP -->
   <div id="app" class="app">
     <div class="header no-print">
       <div>
@@ -94,33 +90,21 @@
         <button class="btn-pdf" onclick="telechargerPDF()">📄 Tableau de Bord PDF</button>
         <button class="btn-logout" onclick="logout()">Déconnexion</button>
       </div>
-    </div>
-
     <div class="stats no-print">
       <div class="stat-box"><h3>TOTAL MEMBRES</h3><p id="totalMembres">0</p></div>
       <div class="stat-box"><h3>TOTAL COTISATIONS</h3><p id="totalCotisations">0 FCFA</p></div>
       <div class="stat-box"><h3>QUARTIERS ACTIFS</h3><p id="totalQuartiers">0</p></div>
       <div class="stat-box"><h3>CE MOIS-CI</h3><p id="totalMois">0 FCFA</p></div>
     </div>
-
     <div class="charts no-print">
-      <div class="chart-container">
-        <h3>Répartition par quartier</h3>
-        <canvas id="chartQuartier"></canvas>
-      </div>
-      <div class="chart-container">
-        <h3>Cotisations par mois</h3>
-        <canvas id="chartMois"></canvas>
-      </div>
+      <div class="chart-container"><h3>Répartition par quartier</h3><canvas id="chartQuartier"></canvas></div>
+      <div class="chart-container"><h3>Cotisations par mois</h3><canvas id="chartMois"></canvas></div>
     </div>
-
     <div class="tabs no-print">
       <button class="tab active" onclick="openTab('membres')">Membres</button>
       <button class="tab" onclick="openTab('cotisations')">Cotisations</button>
       <button class="tab" id="tabAdmins" onclick="openTab('admins')" style="display:none;">Admins</button>
     </div>
-
-    <!-- MEMBRES -->
     <div id="membres" class="content active">
       <h2 class="no-print">Gestion des membres</h2>
       <form id="formMembre" class="form-row no-print" enctype="multipart/form-data">
@@ -135,13 +119,8 @@
         <button class="btn-export" onclick="exporterMembres()">📊 Export Excel</button>
         <button class="btn-print" onclick="window.print()">🖨 Imprimer</button>
       </div>
-      <table id="tableMembres">
-        <thead><tr><th>Photo</th><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th class="no-print">Actions</th></tr></thead>
-        <tbody id="listeMembres"></tbody>
-      </table>
+      <table><thead><tr><th>Photo</th><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th class="no-print">Actions</th></tr></thead><tbody id="listeMembres"></tbody></table>
     </div>
-
-    <!-- COTISATIONS -->
     <div id="cotisations" class="content">
       <h2 class="no-print">Gestion des cotisations</h2>
       <div class="form-row no-print">
@@ -151,515 +130,270 @@
         <button class="btn-export" onclick="exporterCotisations()">📊 Export Excel</button>
         <button class="btn-print" onclick="window.print()">🖨 Imprimer</button>
       </div>
-      <table id="tableCotisations">
-        <thead><tr><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th class="no-print">Actions</th></tr></thead>
-        <tbody id="listeCotisations"></tbody>
-      </table>
+      <table><thead><tr><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th class="no-print">Actions</th></tr></thead><tbody id="listeCotisations"></tbody></table>
     </div>
-
-    <!-- ADMINS -->
     <div id="admins" class="content">
       <h2 class="no-print">Gestion des administrateurs</h2>
       <div class="form-row no-print">
         <input id="admin_nom" placeholder="Nom">
         <input id="admin_email" type="email" placeholder="Email">
         <input id="admin_password" type="password" placeholder="Mot de passe">
-        <select id="admin_role">
-          <option value="secretaire">Secrétaire</option>
-          <option value="tresorier">Trésorier</option>
-          <option value="super_admin">Super Admin</option>
-        </select>
+        <select id="admin_role"><option value="secretaire">Secrétaire</option><option value="tresorier">Trésorier</option><option value="super_admin">Super Admin</option></select>
         <button onclick="ajouterAdmin()">Ajouter Admin</button>
       </div>
-      <table>
-        <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Date création</th><th class="no-print">Actions</th></tr></thead>
-        <tbody id="listeAdmins"></tbody>
-      </table>
+      <table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Date création</th><th class="no-print">Actions</th></tr></thead><tbody id="listeAdmins"></tbody></table>
     </div>
   </div>
-
-  <!-- MODAL EDIT MEMBRE -->
-  <div id="modalEdit" class="modal">
-    <div class="modal-content">
-      <h3>Modifier le membre</h3>
-      <form id="formEditMembre" enctype="multipart/form-data">
-        <input type="hidden" id="edit_id" name="id">
-        <input type="hidden" id="photo_existante" name="photo_existante">
-        <img id="previewPhoto" class="photo-preview" src="" style="display:none;">
-        <input id="edit_nom" name="nom" placeholder="Nom complet" style="width: 95%;" required><br>
-        <input id="edit_telephone" name="telephone" placeholder="Téléphone WhatsApp" style="width: 95%;"><br>
-        <input id="edit_quartier" name="quartier" placeholder="Quartier" style="width: 95%;"><br>
-        <input type="file" id="edit_photo" name="photo" accept="image/*" style="width: 95%;"><br><br>
-        <button type="submit">Enregistrer</button>
-        <button type="button" onclick="fermerModal('modalEdit')" style="background: #6B7280;">Annuler</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL CARTE MEMBRE -->
-  <div id="modalCarte" class="modal">
-    <div class="modal-content" style="width: 400px;">
-      <h3 class="no-print">Carte de Membre</h3>
-      <div id="carteMembre" class="carte-membre"></div>
-      <div class="no-print" style="margin-top: 15px; text-align: center;">
-        <button class="btn-print" onclick="window.print()">🖨 Imprimer la carte</button>
-        <button onclick="fermerModal('modalCarte')" style="background: #6B7280;">Fermer</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let chartQuartier = null;
-    let chartMois = null;
-    let userRole = '';
-    let db;
-
-    // === IndexedDB pour Mode Hors Ligne ===
-    const initDB = () => {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open('espoir-citoyen-offline', 2);
-        request.onupgradeneeded = e => {
-          db = e.target.result;
-          if (!db.objectStoreNames.contains('membres_offline')) {
-            db.createObjectStore('membres_offline', { keyPath: 'tempId', autoIncrement: true });
-          }
-          if (!db.objectStoreNames.contains('cotisations_offline')) {
-            db.createObjectStore('cotisations_offline', { keyPath: 'tempId', autoIncrement: true });
-          }
-          if (!db.objectStoreNames.contains('cache_membres')) {
-            db.createObjectStore('cache_membres', { keyPath: 'id' });
-          }
-          if (!db.objectStoreNames.contains('cache_cotisations')) {
-            db.createObjectStore('cache_cotisations', { keyPath: 'id' });
-          }
-        };
-        request.onsuccess = e => { db = e.target.result; resolve(db); };
-        request.onerror = e => reject(e);
-      });
-    };
-
-    function isOnline() { return navigator.onLine; }
-
-    function updateStatusReseau() {
-      const badge = document.getElementById('statusReseau');
-      if (isOnline()) {
-        badge.innerHTML = '<span class="online-badge">🟢 En ligne</span>';
-      } else {
-        badge.innerHTML = '<span class="offline-badge">🔴 Hors ligne</span>';
-      }
+  <div id="modalEdit" class="modal"><div class="modal-content">
+    <h3>Modifier le membre</h3>
+    <form id="formEditMembre" enctype="multipart/form-data">
+      <input type="hidden" id="edit_id" name="id"><input type="hidden" id="photo_existante" name="photo_existante">
+      <img id="previewPhoto" class="photo-preview" src="" style="display:none;">
+      <input id="edit_nom" name="nom" placeholder="Nom complet" style="width:95%" required><br>
+      <input id="edit_telephone" name="telephone" placeholder="Téléphone" style="width:95%"><br>
+      <input id="edit_quartier" name="quartier" placeholder="Quartier" style="width:95%"><br>
+      <input type="file" id="edit_photo" name="photo" accept="image/*" style="width:95%"><br><br>
+      <button type="submit">Enregistrer</button>
+      <button type="button" onclick="fermerModal('modalEdit')" style="background:#6B7280">Annuler</button>
+    </form>
+  </div></div>
+  <div id="modalCarte" class="modal"><div class="modal-content" style="width:400px">
+    <h3 class="no-print">Carte de Membre</h3><div id="carteMembre" class="carte-membre"></div>
+    <div class="no-print" style="margin-top:15px;text-align:center"><button class="btn-print" onclick="window.print()">🖨 Imprimer</button><button onclick="fermerModal('modalCarte')" style="background:#6B7280">Fermer</button></div>
+  </div></div>
+<script>
+let chartQuartier=null, chartMois=null, userRole='', db;
+const initDB=()=>new Promise((resolve,reject)=>{
+  const request=indexedDB.open('espoir-citoyen-offline',2);
+  request.onupgradeneeded=e=>{
+    db=e.target.result;
+    if(!db.objectStoreNames.contains('membres_offline')) db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});
+    if(!db.objectStoreNames.contains('cotisations_offline')) db.createObjectStore('cotisations_offline',{keyPath:'tempId',autoIncrement:true});
+    if(!db.objectStoreNames.contains('cache_membres')) db.createObjectStore('cache_membres',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('cache_cotisations')) db.createObjectStore('cache_cotisations',{keyPath:'id'});
+  };
+  request.onsuccess=e=>{db=e.target.result;resolve(db);};
+  request.onerror=e=>reject(e);
+});
+function isOnline(){return navigator.onLine;}
+function updateStatusReseau(){
+  const badge=document.getElementById('statusReseau');
+  if(isOnline()) badge.innerHTML='<span class="online-badge">🟢 En ligne</span>';
+  else badge.innerHTML='<span class="offline-badge">🔴 Hors ligne</span>';
+}
+window.addEventListener('online',()=>{updateStatusReseau();syncDonneesOffline();});
+window.addEventListener('offline',updateStatusReseau);
+async function saveOffline(storeName,data){
+  const tx=db.transaction(storeName,'readwrite');
+  await tx.objectStore(storeName).add({...data,synced:false,timestamp:Date.now()});
+}
+async function syncDonneesOffline(){
+  if(!isOnline()||!db) return;
+  const txM=db.transaction('membres_offline','readonly');
+  const membresOffline=await new Promise(r=>{const req=txM.objectStore('membres_offline').getAll();req.onsuccess=()=>r(req.result);});
+  for(const m of membresOffline){
+    try{
+      const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');
+      await fetch('/api/membres',{method:'POST',body:fd});
+      const txDel=db.transaction('membres_offline','readwrite');txDel.objectStore('membres_offline').delete(m.tempId);
+    }catch(err){console.error(err);}
+  }
+  const txC=db.transaction('cotisations_offline','readonly');
+  const cotOffline=await new Promise(r=>{const req=txC.objectStore('cotisations_offline').getAll();req.onsuccess=()=>r(req.result);});
+  for(const c of cotOffline){
+    try{
+      await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:c.membre_id,montant:c.montant})});
+      const txDel=db.transaction('cotisations_offline','readwrite');txDel.objectStore('cotisations_offline').delete(c.tempId);
+    }catch(err){console.error(err);}
+  }
+  if(membresOffline.length>0||cotOffline.length>0){alert('✅ Données synchronisées !');chargerMembres();chargerCotisations();}
+}
+async function checkAuth(){
+  try{
+    const res=await fetch('/api/check-auth');const data=await res.json();
+    if(data.loggedIn){
+      userRole=data.role;
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('app').style.display='block';
+      document.getElementById('userInfo').innerHTML=`Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
+      if(data.role==='super_admin') document.getElementById('tabAdmins').style.display='block';
+      updateStatusReseau();init();
     }
-
-    window.addEventListener('online', () => {
-      updateStatusReseau();
-      syncDonneesOffline();
-    });
-    window.addEventListener('offline', updateStatusReseau);
-
-    async function saveOffline(storeName, data) {
-      const tx = db.transaction(storeName, 'readwrite');
-      await tx.objectStore(storeName).add({...data, synced: false, timestamp: Date.now()});
+  }catch(e){console.log('Auth check offline');}
+}
+async function login(){
+  const email=document.getElementById('email').value;
+  const password=document.getElementById('password').value;
+  const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+  if(res.ok){
+    const data=await res.json();
+    userRole=data.role;
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('userInfo').innerHTML=`Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
+    if(data.role==='super_admin') document.getElementById('tabAdmins').style.display='block';
+    updateStatusReseau();init();
+  }else{document.getElementById('loginError').style.display='block';}
+}
+async function logout(){await fetch('/api/logout',{method:'POST'});location.reload();}
+function openTab(tabName){
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+  if(event&&event.target) event.target.classList.add('active');
+  if(tabName==='cotisations') chargerCotisations();
+  if(tabName==='admins') chargerAdmins();
+}
+async function init(){await initDB();await chargerStats();await chargerMembres();}
+async function chargerStats(){
+  if(!isOnline()) return;
+  try{
+    const res=await fetch('/api/stats');const data=await res.json();
+    document.getElementById('totalMembres').textContent=data.total_membres;
+    document.getElementById('totalCotisations').textContent=data.total_cotisations.toLocaleString()+' FCFA';
+    document.getElementById('totalQuartiers').textContent=data.graphique_quartier.length;
+    const moisActuel=new Date().toISOString().slice(0,7);
+    const totalMois=data.graphique_mois.find(m=>m.mois===moisActuel);
+    document.getElementById('totalMois').textContent=totalMois?totalMois.total.toLocaleString()+' FCFA':'0 FCFA';
+    const ctx1=document.getElementById('chartQuartier');
+    if(chartQuartier) chartQuartier.destroy();
+    chartQuartier=new Chart(ctx1,{type:'pie',data:{labels:data.graphique_quartier.map(q=>q.quartier),datasets:[{data:data.graphique_quartier.map(q=>q.total),backgroundColor:['#003366','#059669','#F59E0B','#EF4444','#8B5CF6','#EC4899','#10B981','#3B82F6']}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+    const ctx2=document.getElementById('chartMois');
+    if(chartMois) chartMois.destroy();
+    chartMois=new Chart(ctx2,{type:'bar',data:{labels:data.graphique_mois.map(m=>m.mois),datasets:[{label:'Cotisations FCFA',data:data.graphique_mois.map(m=>m.total),backgroundColor:'#003366'}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
+  }catch(err){console.log('Mode hors ligne - stats non chargées');}
+}
+async function chargerMembres(search=''){
+  if(!isOnline()){
+    const tx=db.transaction('cache_membres','readonly');
+    const req=tx.objectStore('cache_membres').getAll();
+    req.onsuccess=()=>afficherMembres(req.result);
+    return;
+  }
+  try{
+    const res=await fetch(`/api/membres?search=${encodeURIComponent(search)}`);const data=await res.json();
+    const tx=db.transaction('cache_membres','readwrite');const store=tx.objectStore('cache_membres');await store.clear();data.forEach(m=>store.put(m));
+    afficherMembres(data);chargerSelectMembres();chargerStats();
+  }catch(err){console.log('Erreur chargement membres');}
+}
+function afficherMembres(data){
+  document.getElementById('listeMembres').innerHTML=data.map(m=>`
+    <tr>
+      <td>${m.photo?`<img src="/uploads/${m.photo}" class="photo-membre">`:'👤'}</td>
+      <td>${m.nom}</td><td>${m.telephone||''}</td><td>${m.quartier||''}</td>
+      <td>${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</td>
+      <td class="actions no-print">
+        <button class="btn-carte" onclick="voirCarte(${m.id})">💳</button>
+        <button class="btn-whatsapp" onclick="ouvrirWhatsApp('${m.telephone}','${m.nom}')">💚</button>
+        ${userRole!=='tresorier'?`<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m).replace(/'/g,"&apos;")})'>✏</button>`:''}
+        ${userRole==='super_admin'?`<button class="btn-delete" onclick="supprimerMembre(${m.id})">🗑</button>`:''}
+      </td>
+    </tr>`).join('');
+}
+async function voirCarte(id){
+  if(!isOnline()){alert('Mode hors ligne : cartes non disponibles');return;}
+  const res=await fetch(`/api/membre/${id}/carte`);const data=await res.json();const m=data.membre;
+  document.getElementById('carteMembre').innerHTML=`<img src="/logo.png" class="carte-logo" onerror="this.style.display='none'">${m.photo?`<img src="/uploads/${m.photo}" class="carte-photo">`:''}<div class="carte-info"><h3>ONG ESPOIR CITOYEN</h3><p><strong>ID:</strong> ${m.id}</p><p><strong>Nom:</strong> ${m.nom}</p><p><strong>Tél:</strong> ${m.telephone}</p><p><strong>Quartier:</strong> ${m.quartier}</p><p style="font-size:11px;margin-top:10px"><strong>Membre depuis:</strong> ${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</p></div><img src="${data.qrcode}" class="carte-qr">`;
+  document.getElementById('modalCarte').style.display='block';
+}
+function ouvrirWhatsApp(tel,nom){
+  if(!tel) return alert('Pas de numéro WhatsApp');
+  const numero=tel.replace(/\s/g,'').replace('+','');const message=encodeURIComponent(`Bonjour ${nom}, message de ESPOIR CITOYEN 🇨🇮`);
+  window.open(`https://wa.me/${numero}?text=${message}`,'_blank');
+}
+function rechercherMembres(){const search=document.getElementById('search').value;chargerMembres(search);}
+document.getElementById('formMembre').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const formData=new FormData(e.target);const data=Object.fromEntries(formData.entries());
+  if(isOnline()){await fetch('/api/membres',{method:'POST',body:formData});alert('Membre ajouté ✅');}
+  else{await saveOffline('membres_offline',data);alert('📴 Mode hors ligne : Membre sauvegardé\nSera envoyé quand internet reviendra');if('serviceWorker' in navigator){navigator.serviceWorker.ready.then(reg=>reg.sync.register('sync-donnees'));}}
+  e.target.reset();chargerMembres();
+});
+function ouvrirModalEdit(membre){
+  document.getElementById('edit_id').value=membre.id;document.getElementById('edit_nom').value=membre.nom;document.getElementById('edit_telephone').value=membre.telephone;document.getElementById('edit_quartier').value=membre.quartier;document.getElementById('photo_existante').value=membre.photo||'';
+  const preview=document.getElementById('previewPhoto');
+  if(membre.photo){preview.src=`/uploads/${membre.photo}`;preview.style.display='block';}else{preview.style.display='none';}
+  document.getElementById('modalEdit').style.display='block';
+}
+function fermerModal(id){document.getElementById(id).style.display='none';}
+document.getElementById('formEditMembre').addEventListener('submit',async(e)=>{
+  e.preventDefault();const id=document.getElementById('edit_id').value;const formData=new FormData(e.target);
+  await fetch(`/api/membres/${id}`,{method:'PUT',body:formData});fermerModal('modalEdit');chargerMembres();
+});
+async function supprimerMembre(id){if(confirm('Supprimer ce membre?')){await fetch(`/api/membres/${id}`,{method:'DELETE'});chargerMembres();}}
+function exporterMembres(){window.location.href='/api/export/membres';}
+async function chargerSelectMembres(){
+  if(!isOnline()) return;
+  const res=await fetch('/api/membres');const data=await res.json();
+  document.getElementById('membre_id').innerHTML='<option value="">Choisir un membre</option>'+data.map(m=>`<option value="${m.id}">${m.nom}</option>`).join('');
+}
+async function chargerCotisations(){
+  if(!isOnline()){
+    const tx=db.transaction('cache_cotisations','readonly');
+    const req=tx.objectStore('cache_cotisations').getAll();
+    req.onsuccess=()=>afficherCotisations(req.result);
+    return;
+  }
+  try{
+    const res=await fetch('/api/cotisations');const data=await res.json();
+    const tx=db.transaction('cache_cotisations','readwrite');const store=tx.objectStore('cache_cotisations');await store.clear();data.forEach(c=>store.put(c));
+    afficherCotisations(data);chargerStats();
+  }catch(err){console.log('Erreur chargement cotisations');}
+}
+function afficherCotisations(data){
+  document.getElementById('listeCotisations').innerHTML=data.map(c=>`
+    <tr><td>${c.nom}</td><td>${c.quartier}</td><td>${c.montant.toLocaleString()} FCFA</td><td>${new Date(c.date_cotisation).toLocaleDateString('fr-FR')}</td>
+    <td class="no-print"><button class="btn-whatsapp" onclick="envoyerRecuWhatsApp('${c.telephone}','${c.nom}',${c.montant})">💚 Recu</button>${userRole!=='secretaire'?`<button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑</button>`:''}</td></tr>`).join('');
+}
+function envoyerRecuWhatsApp(tel,nom,montant){
+  if(!tel) return alert('Pas de numéro');
+  const numero=tel.replace(/\s/g,'').replace('+','');const message=encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${nom},\nNous confirmons la réception de votre cotisation de ${montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+  window.open(`https://wa.me/${numero}?text=${message}`,'_blank');
+}
+async function ajouterCotisation(){
+  const membre_id=document.getElementById('membre_id').value;
+  const montant=document.getElementById('montant').value;
+  if(!membre_id||!montant) return alert('Choisis un membre et un montant');
+  const data={membre_id:parseInt(membre_id),montant:parseInt(montant)};
+  if(isOnline()){
+    const res=await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const result=await res.json();
+    if(result.whatsapp&&result.whatsapp.telephone){
+      const numero=result.whatsapp.telephone.replace(/\s/g,'').replace('+','');
+      const message=encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${result.whatsapp.nom},\nNous confirmons la réception de votre cotisation de ${result.whatsapp.montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+      window.open(`https://wa.me/${numero}?text=${message}`,'_blank');
     }
-
-    async function syncDonneesOffline() {
-      if (!isOnline() || !db) return;
-      console.log('Synchronisation démarrée...');
-      
-      const txM = db.transaction('membres_offline', 'readonly');
-      const membresOffline = await txM.objectStore('membres_offline').getAll();
-      
-      for (const m of membresOffline) {
-        try {
-          const formData = new FormData();
-          formData.append('nom', m.nom);
-          formData.append('telephone', m.telephone || '');
-          formData.append('quartier', m.quartier || '');
-          await fetch('/api/membres', { method: 'POST', body: formData });
-          
-          const txDel = db.transaction('membres_offline', 'readwrite');
-          await txDel.objectStore('membres_offline').delete(m.tempId);
-        } catch (err) {
-          console.error('Erreur sync membre:', err);
-        }
-      }
-      
-      const txC = db.transaction('cotisations_offline', 'readonly');
-      const cotisationsOffline = await txC.objectStore('cotisations_offline').getAll();
-      
-      for (const c of cotisationsOffline) {
-        try {
-          await fetch('/api/cotisations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ membre_id: c.membre_id, montant: c.montant })
-          });
-          
-          const txDel = db.transaction('cotisations_offline', 'readwrite');
-          await txDel.objectStore('cotisations_offline').delete(c.tempId);
-        } catch (err) {
-          console.error('Erreur sync cotisation:', err);
-        }
-      }
-      
-      if (membresOffline.length > 0 || cotisationsOffline.length > 0) {
-        alert('✅ Données synchronisées !');
-        chargerMembres();
-        chargerCotisations();
-      }
-    }
-
-    async function checkAuth() {
-      const res = await fetch('/api/check-auth');
-      const data = await res.json();
-      if (data.loggedIn) {
-        userRole = data.role;
-        document.getElementById('loginBox').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('userInfo').innerHTML = `Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
-        if (data.role === 'super_admin') document.getElementById('tabAdmins').style.display = 'block';
-        updateStatusReseau();
-        init();
-      }
-    }
-
-    async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        userRole = data.role;
-        document.getElementById('loginBox').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('userInfo').innerHTML = `Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
-        if (data.role === 'super_admin') document.getElementById('tabAdmins').style.display = 'block';
-        updateStatusReseau();
-        init();
-      } else {
-        document.getElementById('loginError').style.display = 'block';
-      }
-    }
-
-    async function logout() {
-      await fetch('/api/logout', { method: 'POST' });
-      location.reload();
-    }
-
-    function openTab(tabName) {
-      document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
-      event.target.classList.add('active');
-      if(tabName === 'cotisations') chargerCotisations();
-      if(tabName === 'admins') chargerAdmins();
-    }
-
-    async function init() {
-      await initDB();
-      await chargerStats();
-      await chargerMembres();
-    }
-
-    async function chargerStats() {
-      if (!isOnline()) return;
-      try {
-        const res = await fetch('/api/stats');
-        const data = await res.json();
-        document.getElementById('totalMembres').textContent = data.total_membres;
-        document.getElementById('totalCotisations').textContent = data.total_cotisations.toLocaleString() + ' FCFA';
-        document.getElementById('totalQuartiers').textContent = data.graphique_quartier.length;
-        
-        const moisActuel = new Date().toISOString().slice(0, 7);
-        const totalMois = data.graphique_mois.find(m => m.mois === moisActuel);
-        document.getElementById('totalMois').textContent = totalMois ? totalMois.total.toLocaleString() + ' FCFA' : '0 FCFA';
-
-        const ctx1 = document.getElementById('chartQuartier');
-        if (chartQuartier) chartQuartier.destroy();
-        chartQuartier = new Chart(ctx1, {
-          type: 'pie',
-          data: {
-            labels: data.graphique_quartier.map(q => q.quartier),
-            datasets: [{ data: data.graphique_quartier.map(q => q.total), backgroundColor: ['#003366', '#059669', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#10B981', '#3B82F6'] }]
-          },
-          options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-        });
-
-        const ctx2 = document.getElementById('chartMois');
-        if (chartMois) chartMois.destroy();
-        chartMois = new Chart(ctx2, {
-          type: 'bar',
-          data: {
-            labels: data.graphique_mois.map(m => m.mois),
-            datasets: [{ label: 'Cotisations FCFA', data: data.graphique_mois.map(m => m.total), backgroundColor: '#003366' }]
-          },
-          options: { responsive: true, scales: { y: { beginAtZero: true } } }
-        });
-      } catch (err) {
-        console.log('Mode hors ligne - stats non chargées');
-      }
-    }
-
-    async function chargerMembres(search = '') {
-      if (!isOnline()) {
-        const tx = db.transaction('cache_membres', 'readonly');
-        const data = await tx.objectStore('cache_membres').getAll();
-        afficherMembres(data);
-        return;
-      }
-      try {
-        const res = await fetch(`/api/membres?search=${encodeURIComponent(search)}`);
-        const data = await res.json();
-        
-        const tx = db.transaction('cache_membres', 'readwrite');
-        const store = tx.objectStore('cache_membres');
-        await store.clear();
-        data.forEach(m => store.put(m));
-        
-        afficherMembres(data);
-        chargerSelectMembres();
-        chargerStats();
-      } catch (err) {
-        console.log('Erreur chargement membres');
-      }
-    }
-
-    function afficherMembres(data) {
-      document.getElementById('listeMembres').innerHTML = data.map(m => `
-        <tr>
-          <td>${m.photo? `<img src="/uploads/${m.photo}" class="photo-membre">` : '👤'}</td>
-          <td>${m.nom}</td>
-          <td>${m.telephone || ''}</td>
-          <td>${m.quartier || ''}</td>
-          <td>${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</td>
-          <td class="actions no-print">
-            <button class="btn-carte" onclick="voirCarte(${m.id})" title="Carte">💳</button>
-            <button class="btn-whatsapp" onclick="ouvrirWhatsApp('${m.telephone}', '${m.nom}')" title="WhatsApp">💚</button>
-            ${userRole !== 'tresorier' ? `<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m).replace(/'/g, "&apos;")})' title="Modifier">✏</button>` : ''}
-            ${userRole === 'super_admin' ? `<button class="btn-delete" onclick="supprimerMembre(${m.id})" title="Supprimer">🗑</button>` : ''}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function voirCarte(id) {
-      if (!isOnline()) {
-        alert('Mode hors ligne : cartes non disponibles');
-        return;
-      }
-      const res = await fetch(`/api/membre/${id}/carte`);
-      const data = await res.json();
-      const m = data.membre;
-      document.getElementById('carteMembre').innerHTML = `
-        <img src="/logo.png" class="carte-logo" onerror="this.style.display='none'">
-        ${m.photo ? `<img src="/uploads/${m.photo}" class="carte-photo">` : ''}
-        <div class="carte-info">
-          <h3>ONG ESPOIR CITOYEN</h3>
-          <p><strong>ID:</strong> ${m.id}</p>
-          <p><strong>Nom:</strong> ${m.nom}</p>
-          <p><strong>Tél:</strong> ${m.telephone}</p>
-          <p><strong>Quartier:</strong> ${m.quartier}</p>
-          <p style="font-size:11px;margin-top:10px;"><strong>Membre depuis:</strong> ${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</p>
-        </div>
-        <img src="${data.qrcode}" class="carte-qr">
-      `;
-      document.getElementById('modalCarte').style.display = 'block';
-    }
-
-    function ouvrirWhatsApp(tel, nom) {
-      if (!tel) return alert('Pas de numéro WhatsApp');
-      const numero = tel.replace(/\s/g, '').replace('+', '');
-      const message = encodeURIComponent(`Bonjour ${nom}, message de ESPOIR CITOYEN 🇨🇮`);
-      window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
-    }
-
-    function rechercherMembres() {
-      const search = document.getElementById('search').value;
-      chargerMembres(search);
-    }
-
-    document.getElementById('formMembre').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
-      
-      if (isOnline()) {
-        await fetch('/api/membres', { method: 'POST', body: formData });
-        alert('Membre ajouté ✅');
-      } else {
-        await saveOffline('membres_offline', data);
-        alert('📴 Mode hors ligne : Membre sauvegardé\nSera envoyé quand internet reviendra');
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(reg => reg.sync.register('sync-donnees'));
-        }
-      }
-      e.target.reset();
-      chargerMembres();
-    });
-
-    function ouvrirModalEdit(membre) {
-      document.getElementById('edit_id').value = membre.id;
-      document.getElementById('edit_nom').value = membre.nom;
-      document.getElementById('edit_telephone').value = membre.telephone;
-      document.getElementById('edit_quartier').value = membre.quartier;
-      document.getElementById('photo_existante').value = membre.photo || '';
-      const preview = document.getElementById('previewPhoto');
-      if (membre.photo) {
-        preview.src = `/uploads/${membre.photo}`;
-        preview.style.display = 'block';
-      } else {
-        preview.style.display = 'none';
-      }
-      document.getElementById('modalEdit').style.display = 'block';
-    }
-
-    function fermerModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
-
-    document.getElementById('formEditMembre').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const id = document.getElementById('edit_id').value;
-      const formData = new FormData(e.target);
-      await fetch(`/api/membres/${id}`, { method: 'PUT', body: formData });
-      fermerModal('modalEdit');
-      chargerMembres();
-    });
-
-    async function supprimerMembre(id) {
-      if (confirm('Supprimer ce membre?')) {
-        await fetch(`/api/membres/${id}`, { method: 'DELETE' });
-        chargerMembres();
-      }
-    }
-
-    function exporterMembres() { window.location.href = '/api/export/membres'; }
-
-    async function chargerSelectMembres() {
-      if (!isOnline()) return;
-      const res = await fetch('/api/membres');
-      const data = await res.json();
-      document.getElementById('membre_id').innerHTML = '<option value="">Choisir un membre</option>' +
-        data.map(m => `<option value="${m.id}">${m.nom}</option>`).join('');
-    }
-
-    async function chargerCotisations() {
-      if (!isOnline()) {
-        const tx = db.transaction('cache_cotisations', 'readonly');
-        const data = await tx.objectStore('cache_cotisations').getAll();
-        afficherCotisations(data);
-        return;
-      }
-      try {
-        const res = await fetch('/api/cotisations');
-        const data = await res.json();
-        
-        const tx = db.transaction('cache_cotisations', 'readwrite');
-        const store = tx.objectStore('cache_cotisations');
-        await store.clear();
-        data.forEach(c => store.put(c));
-        
-        afficherCotisations(data);
-        chargerStats();
-      } catch (err) {
-        console.log('Erreur chargement cotisations');
-      }
-    }
-
-    function afficherCotisations(data) {
-      document.getElementById('listeCotisations').innerHTML = data.map(c => `
-        <tr>
-          <td>${c.nom}</td>
-          <td>${c.quartier}</td>
-          <td>${c.montant.toLocaleString()} FCFA</td>
-          <td>${new Date(c.date_cotisation).toLocaleDateString('fr-FR')}</td>
-          <td class="no-print">
-            <button class="btn-whatsapp" onclick="envoyerRecuWhatsApp('${c.telephone}', '${c.nom}', ${c.montant})">💚 Recu</button>
-            ${userRole !== 'secretaire' ? `<button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑</button>` : ''}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    function envoyerRecuWhatsApp(tel, nom, montant) {
-      if (!tel) return alert('Pas de numéro WhatsApp');
-      const numero = tel.replace(/\s/g, '').replace('+', '');
-      const message = encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${nom},\nNous confirmons la réception de votre cotisation de ${montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
-      window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
-    }
-
-    async function ajouterCotisation() {
-      const membre_id = document.getElementById('membre_id').value;
-      const montant = document.getElementById('montant').value;
-      if (!membre_id || !montant) return alert('Choisis un membre et un montant');
-      
-      const data = { membre_id: parseInt(membre_id), montant: parseInt(montant) };
-      
-      if (isOnline()) {
-        const res = await fetch('/api/cotisations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        const result = await res.json();
-        if (result.whatsapp && result.whatsapp.telephone) {
-          const numero = result.whatsapp.telephone.replace(/\s/g, '').replace('+', '');
-          const message = encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${result.whatsapp.nom},\nNous confirmons la réception de votre cotisation de ${result.whatsapp.montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
-          window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
-        }
-        alert('Cotisation ajoutée ✅');
-      } else {
-        await saveOffline('cotisations_offline', data);
-        alert('📴 Mode hors ligne : Cotisation sauvegardée\nSera envoyée quand internet reviendra');
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(reg => reg.sync.register('sync-donnees'));
-        }
-      }
-      document.getElementById('montant').value = '';
-      chargerCotisations();
-    }
-
-    async function supprimerCotisation(id) {
-      if (confirm('Supprimer cette cotisation?')) {
-        await fetch(`/api/cotisations/${id}`, { method: 'DELETE' });
-        chargerCotisations();
-      }
-    }
-
-    function exporterCotisations() { window.location.href = '/api/export/cotisations'; }
-
-    function telechargerPDF() { window.location.href = '/api/export/pdf-dashboard'; }
-
-    async function chargerAdmins() {
-      const res = await fetch('/api/admins');
-      if (res.status === 403) return;
-      const data = await res.json();
-      document.getElementById('listeAdmins').innerHTML = data.map(a => `
-        <tr>
-          <td>${a.nom}</td>
-          <td>${a.email}</td>
-          <td><span class="role-badge role-${a.role}">${a.role}</span></td>
-          <td>${new Date(a.date_creation).toLocaleDateString('fr-FR')}</td>
-          <td class="no-print">
-            ${a.role !== 'super_admin' ? `<button class="btn-delete" onclick="supprimerAdmin(${a.id})">🗑</button>` : ''}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function ajouterAdmin() {
-      const nom = document.getElementById('admin_nom').value;
-      const email = document.getElementById('admin_email').value;
-      const password = document.getElementById('admin_password').value;
-      const role = document.getElementById('admin_role').value;
-      if (!email || !password) return alert('Email et mot de passe requis');
-      await fetch('/api/admins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, email, password, role })
-      });
-      document.getElementById('admin_nom').value = '';
-      document.getElementById('admin_email').value = '';
-      document.getElementById('admin_password').
+    alert('Cotisation ajoutée ✅');
+  }else{
+    await saveOffline('cotisations_offline',data);
+    alert('📴 Mode hors ligne : Cotisation sauvegardée\nSera envoyée quand internet reviendra');
+    if('serviceWorker' in navigator){navigator.serviceWorker.ready.then(reg=>reg.sync.register('sync-donnees'));}
+  }
+  document.getElementById('montant').value='';chargerCotisations();
+}
+async function supprimerCotisation(id){if(confirm('Supprimer cette cotisation?')){await fetch(`/api/cotisations/${id}`,{method:'DELETE'});chargerCotisations();}}
+function exporterCotisations(){window.location.href='/api/export/cotisations';}
+function telechargerPDF(){window.location.href='/api/export/pdf-dashboard';}
+async function chargerAdmins(){
+  const res=await fetch('/api/admins');if(res.status===403) return;
+  const data=await res.json();
+  document.getElementById('listeAdmins').innerHTML=data.map(a=>`<tr><td>${a.nom}</td><td>${a.email}</td><td><span class="role-badge role-${a.role}">${a.role}</span></td><td>${new Date(a.date_creation).toLocaleDateString('fr-FR')}</td><td class="no-print">${a.role!=='super_admin'?`<button class="btn-delete" onclick="supprimerAdmin(${a.id})">🗑</button>`:''}</td></tr>`).join('');
+}
+async function ajouterAdmin(){
+  const nom=document.getElementById('admin_nom').value;const email=document.getElementById('admin_email').value;const password=document.getElementById('admin_password').value;const role=document.getElementById('admin_role').value;
+  if(!email||!password) return alert('Email et mot de passe requis');
+  await fetch('/api/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom,email,password,role})});
+  document.getElementById('admin_nom').value='';document.getElementById('admin_email').value='';document.getElementById('admin_password').value='';chargerAdmins();
+}
+async function supprimerAdmin(id){if(confirm('Supprimer cet admin?')){await fetch(`/api/admins/${id}`,{method:'DELETE'});chargerAdmins();}}
+checkAuth();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').then(reg=>console.log('SW enregistré:',reg.scope)).catch(err=>console.log('SW erreur:',err));
+  });
+}
+</script>
+</body>
+</html>

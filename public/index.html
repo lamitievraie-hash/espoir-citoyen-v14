@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>ESPOIR CITOYEN V15.0</title>
+  <title>ESPOIR CITOYEN V15.1</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#003366">
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,6 +18,8 @@
     .app { display: none; }
     .header { display: flex; justify-content: space-between; align-items: center; }
     .user-info { font-size: 14px; color: #666; }
+    .offline-badge { background: #EF4444; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+    .online-badge { background: #059669; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
     .stat-box { background: #003366; color: white; padding: 20px; border-radius: 8px; text-align: center; }
     .stat-box h3 { margin: 0; font-size: 14px; opacity: 0.8; }
@@ -73,7 +75,7 @@
 <body>
   <!-- LOGIN -->
   <div id="loginBox" class="login-box">
-    <h2>🇨🇮 ESPOIR CITOYEN V15.0</h2>
+    <h2>🇨🇮 ESPOIR CITOYEN V15.1</h2>
     <p>Connexion Administrateur</p>
     <input type="email" id="email" placeholder="Email" style="width: 95%; margin-bottom: 10px;">
     <input type="password" id="password" placeholder="Mot de passe" style="width: 95%;">
@@ -85,7 +87,7 @@
   <div id="app" class="app">
     <div class="header no-print">
       <div>
-        <h1>🇨🇮 ESPOIR CITOYEN V15.0</h1>
+        <h1>🇨🇮 ESPOIR CITOYEN V15.1 <span id="statusReseau"></span></h1>
         <div class="user-info" id="userInfo"></div>
       </div>
       <div>
@@ -210,6 +212,103 @@
     let chartQuartier = null;
     let chartMois = null;
     let userRole = '';
+    let db;
+
+    // === IndexedDB pour Mode Hors Ligne ===
+    const initDB = () => {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('espoir-citoyen-offline', 2);
+        request.onupgradeneeded = e => {
+          db = e.target.result;
+          if (!db.objectStoreNames.contains('membres_offline')) {
+            db.createObjectStore('membres_offline', { keyPath: 'tempId', autoIncrement: true });
+          }
+          if (!db.objectStoreNames.contains('cotisations_offline')) {
+            db.createObjectStore('cotisations_offline', { keyPath: 'tempId', autoIncrement: true });
+          }
+          if (!db.objectStoreNames.contains('cache_membres')) {
+            db.createObjectStore('cache_membres', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('cache_cotisations')) {
+            db.createObjectStore('cache_cotisations', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = e => { db = e.target.result; resolve(db); };
+        request.onerror = e => reject(e);
+      });
+    };
+
+    function isOnline() { return navigator.onLine; }
+
+    function updateStatusReseau() {
+      const badge = document.getElementById('statusReseau');
+      if (isOnline()) {
+        badge.innerHTML = '<span class="online-badge">🟢 En ligne</span>';
+      } else {
+        badge.innerHTML = '<span class="offline-badge">🔴 Hors ligne</span>';
+      }
+    }
+
+    window.addEventListener('online', () => {
+      updateStatusReseau();
+      syncDonneesOffline();
+    });
+    window.addEventListener('offline', updateStatusReseau);
+
+    async function saveOffline(storeName, data) {
+      const tx = db.transaction(storeName, 'readwrite');
+      await tx.objectStore(storeName).add({...data, synced: false, timestamp: Date.now()});
+    }
+
+    async function syncDonneesOffline() {
+      if (!isOnline() || !db) return;
+      console.log('Synchronisation démarrée...');
+      
+      // Sync membres
+      const txM = db.transaction('membres_offline', 'readonly');
+      const membresOffline = await txM.objectStore('membres_offline').getAll();
+      
+      for (const m of membresOffline) {
+        try {
+          const formData = new FormData();
+          formData.append('nom', m.nom);
+          formData.append('telephone', m.telephone);
+          formData.append('quartier', m.quartier);
+          await fetch('/api/membres', { method: 'POST', body: formData });
+          
+          // Supprimer de l'offline après sync
+          const txDel = db.transaction('membres_offline', 'readwrite');
+          await txDel.objectStore('membres_offline').delete(m.tempId);
+        } catch (err) {
+          console.error('Erreur sync membre:', err);
+        }
+      }
+      
+      // Sync cotisations
+      const txC = db.transaction('cotisations_offline', 'readonly');
+      const cotisationsOffline = await txC.objectStore('cotisations_offline').getAll();
+      
+      for (const c of cotisationsOffline) {
+        try {
+          await fetch('/api/cotisations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ membre_id: c.membre_id, montant: c.montant })
+          });
+          
+          const txDel = db.transaction('cotisations_offline', 'readwrite');
+          await txDel.objectStore('cotisations_offline').delete(c.tempId);
+        } catch (err) {
+          console.error('Erreur sync cotisation:', err);
+        }
+      }
+      
+      if (membresOffline.length > 0 || cotisationsOffline.length > 0) {
+        alert('✅ Données synchronisées !');
+        chargerMembres();
+        chargerCotisations();
+      }
+    }
 
     async function checkAuth() {
       const res = await fetch('/api/check-auth');
@@ -220,6 +319,7 @@
         document.getElementById('app').style.display = 'block';
         document.getElementById('userInfo').innerHTML = `Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
         if (data.role === 'super_admin') document.getElementById('tabAdmins').style.display = 'block';
+        updateStatusReseau();
         init();
       }
     }
@@ -239,6 +339,7 @@
         document.getElementById('app').style.display = 'block';
         document.getElementById('userInfo').innerHTML = `Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
         if (data.role === 'super_admin') document.getElementById('tabAdmins').style.display = 'block';
+        updateStatusReseau();
         init();
       } else {
         document.getElementById('loginError').style.display = 'block';
@@ -260,69 +361,98 @@
     }
 
     async function init() {
+      await initDB();
       await chargerStats();
       await chargerMembres();
     }
 
     async function chargerStats() {
-      const res = await fetch('/api/stats');
-      const data = await res.json();
-      document.getElementById('totalMembres').textContent = data.total_membres;
-      document.getElementById('totalCotisations').textContent = data.total_cotisations.toLocaleString() + ' FCFA';
-      document.getElementById('totalQuartiers').textContent = data.graphique_quartier.length;
-      
-      const moisActuel = new Date().toISOString().slice(0, 7);
-      const totalMois = data.graphique_mois.find(m => m.mois === moisActuel);
-      document.getElementById('totalMois').textContent = totalMois ? totalMois.total.toLocaleString() + ' FCFA' : '0 FCFA';
+      if (!isOnline()) return;
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        document.getElementById('totalMembres').textContent = data.total_membres;
+        document.getElementById('totalCotisations').textContent = data.total_cotisations.toLocaleString() + ' FCFA';
+        document.getElementById('totalQuartiers').textContent = data.graphique_quartier.length;
+        
+        const moisActuel = new Date().toISOString().slice(0, 7);
+        const totalMois = data.graphique_mois.find(m => m.mois === moisActuel);
+        document.getElementById('totalMois').textContent = totalMois ? totalMois.total.toLocaleString() + ' FCFA' : '0 FCFA';
 
-      // Graphique Camembert
-      const ctx1 = document.getElementById('chartQuartier');
-      if (chartQuartier) chartQuartier.destroy();
-      chartQuartier = new Chart(ctx1, {
-        type: 'pie',
-        data: {
-          labels: data.graphique_quartier.map(q => q.quartier),
-          datasets: [{ data: data.graphique_quartier.map(q => q.total), backgroundColor: ['#003366', '#059669', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#10B981', '#3B82F6'] }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-      });
+        const ctx1 = document.getElementById('chartQuartier');
+        if (chartQuartier) chartQuartier.destroy();
+        chartQuartier = new Chart(ctx1, {
+          type: 'pie',
+          data: {
+            labels: data.graphique_quartier.map(q => q.quartier),
+            datasets: [{ data: data.graphique_quartier.map(q => q.total), backgroundColor: ['#003366', '#059669', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#10B981', '#3B82F6'] }]
+          },
+          options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
 
-      // Graphique Barres
-      const ctx2 = document.getElementById('chartMois');
-      if (chartMois) chartMois.destroy();
-      chartMois = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: data.graphique_mois.map(m => m.mois),
-          datasets: [{ label: 'Cotisations FCFA', data: data.graphique_mois.map(m => m.total), backgroundColor: '#003366' }]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
-      });
+        const ctx2 = document.getElementById('chartMois');
+        if (chartMois) chartMois.destroy();
+        chartMois = new Chart(ctx2, {
+          type: 'bar',
+          data: {
+            labels: data.graphique_mois.map(m => m.mois),
+            datasets: [{ label: 'Cotisations FCFA', data: data.graphique_mois.map(m => m.total), backgroundColor: '#003366' }]
+          },
+          options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+      } catch (err) {
+        console.log('Mode hors ligne - stats non chargées');
+      }
     }
 
     async function chargerMembres(search = '') {
-      const res = await fetch(`/api/membres?search=${encodeURIComponent(search)}`);
-      const data = await res.json();
+      if (!isOnline()) {
+        const tx = db.transaction('cache_membres', 'readonly');
+        const data = await tx.objectStore('cache_membres').getAll();
+        afficherMembres(data);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/membres?search=${encodeURIComponent(search)}`);
+        const data = await res.json();
+        
+        // Mettre en cache
+        const tx = db.transaction('cache_membres', 'readwrite');
+        const store = tx.objectStore('cache_membres');
+        await store.clear();
+        data.forEach(m => store.put(m));
+        
+        afficherMembres(data);
+        chargerSelectMembres();
+        chargerStats();
+      } catch (err) {
+        console.log('Erreur chargement membres');
+      }
+    }
+
+    function afficherMembres(data) {
       document.getElementById('listeMembres').innerHTML = data.map(m => `
         <tr>
           <td>${m.photo? `<img src="/uploads/${m.photo}" class="photo-membre">` : '👤'}</td>
           <td>${m.nom}</td>
-          <td>${m.telephone}</td>
-          <td>${m.quartier}</td>
+          <td>${m.telephone || ''}</td>
+          <td>${m.quartier || ''}</td>
           <td>${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</td>
           <td class="actions no-print">
             <button class="btn-carte" onclick="voirCarte(${m.id})" title="Carte">💳</button>
             <button class="btn-whatsapp" onclick="ouvrirWhatsApp('${m.telephone}', '${m.nom}')" title="WhatsApp">💚</button>
-            ${userRole !== 'tresorier' ? `<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m)})' title="Modifier">✏</button>` : ''}
+            ${userRole !== 'tresorier' ? `<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m).replace(/'/g, "&apos;")})' title="Modifier">✏</button>` : ''}
             ${userRole === 'super_admin' ? `<button class="btn-delete" onclick="supprimerMembre(${m.id})" title="Supprimer">🗑</button>` : ''}
           </td>
         </tr>
       `).join('');
-      chargerSelectMembres();
-      chargerStats();
     }
 
     async function voirCarte(id) {
+      if (!isOnline()) {
+        alert('Mode hors ligne : cartes non disponibles');
+        return;
+      }
       const res = await fetch(`/api/membre/${id}/carte`);
       const data = await res.json();
       const m = data.membre;
@@ -357,7 +487,18 @@
     document.getElementById('formMembre').addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
-      await fetch('/api/membres', { method: 'POST', body: formData });
+      const data = Object.fromEntries(formData.entries());
+      
+      if (isOnline()) {
+        await fetch('/api/membres', { method: 'POST', body: formData });
+        alert('Membre ajouté ✅');
+      } else {
+        await saveOffline('membres_offline', data);
+        alert('📴 Mode hors ligne : Membre sauvegardé\nSera envoyé quand internet reviendra');
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => reg.sync.register('sync-donnees'));
+        }
+      }
       e.target.reset();
       chargerMembres();
     });
@@ -401,6 +542,7 @@
     function exporterMembres() { window.location.href = '/api/export/membres'; }
 
     async function chargerSelectMembres() {
+      if (!isOnline()) return;
       const res = await fetch('/api/membres');
       const data = await res.json();
       document.getElementById('membre_id').innerHTML = '<option value="">Choisir un membre</option>' +
@@ -408,8 +550,29 @@
     }
 
     async function chargerCotisations() {
-      const res = await fetch('/api/cotisations');
-      const data = await res.json();
+      if (!isOnline()) {
+        const tx = db.transaction('cache_cotisations', 'readonly');
+        const data = await tx.objectStore('cache_cotisations').getAll();
+        afficherCotisations(data);
+        return;
+      }
+      try {
+        const res = await fetch('/api/cotisations');
+        const data = await res.json();
+        
+        const tx = db.transaction('cache_cotisations', 'readwrite');
+        const store = tx.objectStore('cache_cotisations');
+        await store.clear();
+        data.forEach(c => store.put(c));
+        
+        afficherCotisations(data);
+        chargerStats();
+      } catch (err) {
+        console.log('Erreur chargement cotisations');
+      }
+    }
+
+    function afficherCotisations(data) {
       document.getElementById('listeCotisations').innerHTML = data.map(c => `
         <tr>
           <td>${c.nom}</td>
@@ -422,7 +585,6 @@
           </td>
         </tr>
       `).join('');
-      chargerStats();
     }
 
     function envoyerRecuWhatsApp(tel, nom, montant) {
@@ -436,16 +598,28 @@
       const membre_id = document.getElementById('membre_id').value;
       const montant = document.getElementById('montant').value;
       if (!membre_id || !montant) return alert('Choisis un membre et un montant');
-      const res = await fetch('/api/cotisations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ membre_id, montant })
-      });
-      const data = await res.json();
-      if (data.whatsapp && data.whatsapp.telephone) {
-        const numero = data.whatsapp.telephone.replace(/\s/g, '').replace('+', '');
-        const message = encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${data.whatsapp.nom},\nNous confirmons la réception de votre cotisation de ${data.whatsapp.montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
-        window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
+      
+      const data = { membre_id, montant: parseInt(montant) };
+      
+      if (isOnline()) {
+        const res = await fetch('/api/cotisations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (result.whatsapp && result.whatsapp.telephone) {
+          const numero = result.whatsapp.telephone.replace(/\s/g, '').replace('+', '');
+          const message = encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${result.whatsapp.nom},\nNous confirmons la réception de votre cotisation de ${result.whatsapp.montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+          window.open(`https://wa.me/${numero}?text=${message}`, '_blank');
+        }
+        alert('Cotisation ajoutée ✅');
+      } else {
+        await saveOffline('cotisations_offline', data);
+        alert('📴 Mode hors ligne : Cotisation sauvegardée\nSera envoyée quand internet reviendra');
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then(reg => reg.sync.register('sync-donnees'));
+        }
       }
       document.getElementById('montant').value = '';
       chargerCotisations();
@@ -493,28 +667,4 @@
       document.getElementById('admin_nom').value = '';
       document.getElementById('admin_email').value = '';
       document.getElementById('admin_password').value = '';
-      chargerAdmins();
-    }
-
-    async function supprimerAdmin(id) {
-      if (confirm('Supprimer cet admin?')) {
-        await fetch(`/api/admins/${id}`, { method: 'DELETE' });
-        chargerAdmins();
-      }
-    }
-
-    checkAuth();
-  </script>
-
-  <!-- PWA Service Worker V15.0 -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('PWA V15.0 activée ✅'))
-          .catch(err => console.log('Erreur SW:', err));
-      });
-    }
-  </script>
-</body>
-</html>
+     

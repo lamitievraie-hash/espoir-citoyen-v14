@@ -211,15 +211,6 @@
     let chartMois = null;
     let userRole = '';
 
-    // PWA Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('PWA active'))
-          .catch(err => console.log('SW erreur'));
-      });
-    }
-
     async function checkAuth() {
       const res = await fetch('/api/check-auth');
       const data = await res.json();
@@ -513,6 +504,17 @@
     }
 
     checkAuth();
+  </script>
+
+  <!-- PWA Service Worker V15.0 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('PWA V15.0 activée ✅'))
+          .catch(err => console.log('Erreur SW:', err));
+      });
+    }
   </script>
 </body>
 </html>

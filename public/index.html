@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/logo.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; max-width: 1400px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
+    body { font-family: Arial; max-width: 1400px; margin: 20px auto; padding: 20px; background: #f5f5; }
     h1 { color: #003366; text-align: center; }
     .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .app { display: none; }
@@ -595,7 +595,7 @@
       const montant = document.getElementById('montant').value;
       if (!membre_id || !montant) return alert('Choisis un membre et un montant');
       
-      const data = { membre_id, montant: parseInt(montant) };
+      const data = { membre_id: parseInt(membre_id), montant: parseInt(montant) };
       
       if (isOnline()) {
         const res = await fetch('/api/cotisations', {
@@ -662,21 +662,4 @@
       });
       document.getElementById('admin_nom').value = '';
       document.getElementById('admin_email').value = '';
-      document.getElementById('admin_password').value = '';
-      chargerAdmins();
-    }
-
-    async function supprimerAdmin(id) {
-      if (confirm('Supprimer cet admin?')) {
-        await fetch(`/api/admins/${id}`, { method: 'DELETE' });
-        chargerAdmins();
-      }
-    }
-
-    checkAuth();
-  </script>
-
-  <!-- PWA Service Worker V15.1 -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener
+      document.getElementById('admin_password').

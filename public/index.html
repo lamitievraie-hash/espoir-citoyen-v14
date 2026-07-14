@@ -264,7 +264,6 @@
       if (!isOnline() || !db) return;
       console.log('Synchronisation démarrée...');
       
-      // Sync membres
       const txM = db.transaction('membres_offline', 'readonly');
       const membresOffline = await txM.objectStore('membres_offline').getAll();
       
@@ -272,11 +271,10 @@
         try {
           const formData = new FormData();
           formData.append('nom', m.nom);
-          formData.append('telephone', m.telephone);
-          formData.append('quartier', m.quartier);
+          formData.append('telephone', m.telephone || '');
+          formData.append('quartier', m.quartier || '');
           await fetch('/api/membres', { method: 'POST', body: formData });
           
-          // Supprimer de l'offline après sync
           const txDel = db.transaction('membres_offline', 'readwrite');
           await txDel.objectStore('membres_offline').delete(m.tempId);
         } catch (err) {
@@ -284,7 +282,6 @@
         }
       }
       
-      // Sync cotisations
       const txC = db.transaction('cotisations_offline', 'readonly');
       const cotisationsOffline = await txC.objectStore('cotisations_offline').getAll();
       
@@ -416,7 +413,6 @@
         const res = await fetch(`/api/membres?search=${encodeURIComponent(search)}`);
         const data = await res.json();
         
-        // Mettre en cache
         const tx = db.transaction('cache_membres', 'readwrite');
         const store = tx.objectStore('cache_membres');
         await store.clear();
@@ -667,4 +663,20 @@
       document.getElementById('admin_nom').value = '';
       document.getElementById('admin_email').value = '';
       document.getElementById('admin_password').value = '';
-     
+      chargerAdmins();
+    }
+
+    async function supprimerAdmin(id) {
+      if (confirm('Supprimer cet admin?')) {
+        await fetch(`/api/admins/${id}`, { method: 'DELETE' });
+        chargerAdmins();
+      }
+    }
+
+    checkAuth();
+  </script>
+
+  <!-- PWA Service Worker V15.1 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener

@@ -1,7 +1,7 @@
 {
   "name": "espoir-citoyen-v14",
-  "version": "14.6.0",
-  "description": "ESPOIR CITOYEN V14 - Gestion Association Pro",
+  "version": "14.7.0",
+  "description": "ESPOIR CITOYEN V14 - Gestion Association Pro avec PDF, QR Code, Multi-Admin",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -11,7 +11,9 @@
     "pg": "^8.11.3",
     "exceljs": "^4.4.0",
     "express-session": "^1.17.3",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "pdfkit": "^0.13.0",
+    "qrcode": "^1.5.3"
   },
   "engines": {
     "node": ">=18.0.0"

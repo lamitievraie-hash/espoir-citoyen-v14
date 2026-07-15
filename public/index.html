@@ -2,143 +2,200 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V16.6 - 4 BOUTONS PRO</title>
+<title>V16.7 SHARED DATA</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-<style>.photo-rond{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #002244}.btn-pro{transition:all 0.2s;box-shadow:0 4px 6px rgba(0,0,0,0.1)}.btn-pro:hover{transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,0.15)}</style>
+<style>.photo-rond{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #002244}.btn-pro{transition:all 0.2s;box-shadow:0 4px 6px rgba(0,0,0,0.1)}.btn-pro:hover{transform:translateY(-2px)}</style>
 </head>
 <body class="bg-[#f1f5f9]">
 <div class="bg-[#002244] text-white p-4 sticky top-0 z-50 shadow-xl">
   <div class="flex justify-between items-center flex-wrap gap-2">
-    <div class="flex items-center gap-2">
-      <h1 class="font-black text-sm">🇨🇮 V16.6 - 4 BOUTONS PRO</h1>
-      <span id="userBadge" class="bg-white/20 px-2 py-1 rounded-full text- hidden"></span>
-    </div>
-    <div class="flex gap-2 items-center"><span id="statusReseau"></span><span id="badgeAttente"></span><button onclick="reveillerServeur()" id="btnReveil" class="bg-yellow-400 text-black px-3 py-1.5 rounded-full text-xs font-black">🔧 REVEILLER</button><button onclick="logout()" class="bg-white/20 px-3 py-1 rounded-full text-xs">Déconnexion</button></div>
+    <div class="flex items-center gap-2"><h1 class="font-black text-sm">🇨🇮 V16.7 SHARED DATA</h1><span id="userBadge" class="bg-white/20 px-2 py-1 rounded-full text- hidden"></span></div>
+    <div class="flex gap-2 items-center"><span id="statusReseau"></span><span id="badgeAttente"></span><span id="syncInfo" class="text- bg-black/30 px-2 py-1 rounded-full">Partage ON</span><button onclick="reveillerServeur()" id="btnReveil" class="bg-yellow-400 text-black px-3 py-1.5 rounded-full text-xs font-black">🔧 REVEILLER</button><button onclick="logout()" class="bg-white/20 px-3 py-1 rounded-full text-xs">Déconnexion</button></div>
   </div>
   <div class="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="bg-white/10 p-3 rounded-2xl border border-white/10"><p class="text- opacity-60">TOTAL MEMBRES</p><p id="totalMembres" class="text-xl font-black">0</p></div>
-    <div class="bg-white/10 p-3 rounded-2xl border border-white/10"><p class="text- opacity-60">TOTAL COTISATIONS</p><p id="totalCotisations" class="text-xl font-black">0 FCFA</p></div>
-    <div class="bg-white/10 p-3 rounded-2xl border border-white/10"><p class="text- opacity-60">QUARTIERS</p><p id="totalQuartiers" class="text-xl font-black">0</p></div>
-    <div id="cardAttentePro" class="bg-green-500 p-3 rounded-2xl border"><p id="textAttentePro" class="text-sm font-black">✅ SYNC OK</p><p id="subText" class="text-">Postgres OK</p></div>
+    <div class="bg-white/10 p-3 rounded-2xl border"><p class="text- opacity-60">TOTAL MEMBRES</p><p id="totalMembres" class="text-xl font-black">0</p><p class="text- opacity-50">Partagé Postgres</p></div>
+    <div class="bg-white/10 p-3 rounded-2xl border"><p class="text- opacity-60">TOTAL COTISATIONS</p><p id="totalCotisations" class="text-xl font-black">0 FCFA</p></div>
+    <div class="bg-white/10 p-3 rounded-2xl border"><p class="text- opacity-60">QUARTIERS</p><p id="totalQuartiers" class="text-xl font-black">0</p></div>
+    <div id="cardAttentePro" class="bg-green-500 p-3 rounded-2xl border"><p id="textAttentePro" class="text-sm font-black">✅ SYNC OK</p><p id="subText" class="text-">Postgres partagé</p></div>
   </div>
-  <div id="barReveil" class="hidden mt-3"><div class="w-full bg-black/30 rounded-full h-2"><div id="progressReveil" class="bg-yellow-400 h-2 rounded-full transition-all" style="width:0%"></div></div><p id="logReveil" class="text- mt-1 opacity-80"></p></div>
-
-  <!-- 4 BOUTONS PRO AU MÊME NIVEAU -->
+  <div id="barReveil" class="hidden mt-3"><div class="w-full bg-black/30 rounded-full h-2"><div id="progressReveil" class="bg-yellow-400 h-2 rounded-full" style="width:0%"></div></div><p id="logReveil" class="text- mt-1"></p></div>
   <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <button onclick="exportPDF()" class="btn-pro bg-[#DC2626] hover:bg-[#B91C1C] text-white px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2">
-      <span class="text-lg">📄</span> Tableau de Bord PDF
-    </button>
-    <button onclick="exportMembres()" class="btn-pro bg-[#16A34A] hover:bg-[#15803D] text-white px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2">
-      <span class="text-lg">📊</span> Export Membres Excel
-    </button>
-    <label class="btn-pro bg-[#2563EB] hover:bg-[#1D4ED8] text-white px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 cursor-pointer">
-      <span class="text-lg">📥</span> Import Excel
-      <input type="file" id="importExcel" accept=".xlsx,.xls" class="hidden" onchange="importExcel(this)">
-    </label>
-    <button onclick="exportCotisations()" class="btn-pro bg-[#EAB308] hover:bg-[#CA8A04] text-black px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2">
-      <span class="text-lg">💰</span> Export Cotisations
-    </button>
+    <button onclick="exportPDF()" class="btn-pro bg-[#DC2626] text-white px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2">📄 Tableau de Bord PDF</button>
+    <button onclick="exportMembres()" class="btn-pro bg-[#16A34A] text-white px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2">📊 Export Membres Excel</button>
+    <label class="btn-pro bg-[#2563EB] text-white px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 cursor-pointer">📥 Import Excel<input type="file" id="importExcel" accept=".xlsx,.xls" class="hidden" onchange="importExcel(this)"></label>
+    <button onclick="exportCotisations()" class="btn-pro bg-[#EAB308] text-black px-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2">💰 Export Cotisations</button>
   </div>
 </div>
 
 <div class="max-w- mx-auto p-4 space-y-4">
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="bg-white p-4 rounded-2xl shadow-sm"><canvas id="chartQuartier"></canvas></div><div class="bg-white p-4 rounded-2xl shadow-sm"><canvas id="chartMois"></canvas></div></div>
-  <div class="flex gap-2 flex-wrap">
-    <button onclick="openTab('membres')" class="tab active px-5 py-3 rounded-xl bg-[#002244] text-white font-bold text-sm">👥 Membres</button>
-    <button onclick="openTab('cotisations')" class="tab px-5 py-3 rounded-xl bg-white font-bold text-sm">💰 Cotisations</button>
-    <button onclick="openTab('terrain')" class="tab px-5 py-3 rounded-xl bg-[#FF9A00] text-white font-black text-sm">⚡ TERRAIN</button>
-    <button onclick="openTab('admins')" id="tabAdmins" class="tab hidden px-5 py-3 rounded-xl bg-red-600 text-white font-black text-sm">🔐 SUPER ADMIN</button>
-  </div>
+  <div class="flex gap-2 flex-wrap"><button onclick="openTab('membres')" class="tab active px-5 py-3 rounded-xl bg-[#002244] text-white font-bold text-sm">👥 Membres</button><button onclick="openTab('cotisations')" class="tab px-5 py-3 rounded-xl bg-white font-bold text-sm">💰 Cotisations</button><button onclick="openTab('terrain')" class="tab px-5 py-3 rounded-xl bg-[#FF9A00] text-white font-black text-sm">⚡ TERRAIN</button><button onclick="openTab('admins')" id="tabAdmins" class="tab hidden px-5 py-3 rounded-xl bg-red-600 text-white font-black text-sm">🔐 SUPER ADMIN</button></div>
 
   <div id="membres" class="bg-white p-4 rounded-2xl shadow-sm">
-    <form id="formMembre" class="flex gap-2 flex-wrap mb-4 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-300"><input id="nom" placeholder="Nom *" required class="p-3 border-2 rounded-xl flex-1 font-bold"><input id="telephone" placeholder="WhatsApp" class="p-2 border rounded-lg"><input id="quartier" placeholder="Quartier" class="p-2 border rounded-lg"><input type="file" id="photo" accept="image/*" class="p-2 border rounded bg-white text-xs"><button type="submit" class="bg-[#002244] text-white px-6 py-3 rounded-xl font-black">+ AJOUTER</button></form>
+    <form id="formMembre" class="flex gap-2 flex-wrap mb-4 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-300"><input id="nom" placeholder="Nom *" required class="p-3 border-2 rounded-xl flex-1 font-bold"><input id="telephone" placeholder="WhatsApp" class="p-2 border rounded-lg"><input id="quartier" placeholder="Quartier" class="p-2 border rounded-lg"><input type="file" id="photo" accept="image/*" class="p-2 border rounded bg-white text-xs"><button type="submit" class="bg-[#002244] text-white px-6 py-3 rounded-xl font-black">+ AJOUTER & PARTAGER</button></form>
     <input id="search" placeholder="🔍 Rechercher..." onkeyup="chargerMembres(document.getElementById('search').value)" class="p-2 border rounded-lg w-full max-w-xs mb-3">
     <div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#002244] text-white"><th class="p-3">Photo</th><th>Nom</th><th>Tél</th><th>Quartier</th><th>Date</th><th class="p-3 w-">Actions</th></tr></thead><tbody id="listeMembres"></tbody></table></div>
   </div>
 
   <div id="cotisations" class="hidden bg-white p-4 rounded-2xl shadow-sm">
-    <div class="flex gap-2 flex-wrap mb-4 bg-gray-50 p-3 rounded-xl"><select id="membre_id" class="p-3 border rounded-xl flex-1 font-bold"><option value="">-- Choisir --</option></select><input id="montant" type="number" placeholder="Montant" class="p-3 border-2 border-green-500 rounded-xl font-bold"><button onclick="ajouterCotisation()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-black">💰 ENREGISTRER</button></div>
+    <div class="flex gap-2 flex-wrap mb-4 bg-gray-50 p-3 rounded-xl"><select id="membre_id" class="p-3 border rounded-xl flex-1 font-bold"><option value="">-- Choisir --</option></select><input id="montant" type="number" placeholder="Montant" class="p-3 border-2 border-green-500 rounded-xl font-bold"><button onclick="ajouterCotisation()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-black">💰 ENREGISTRER & PARTAGER</button></div>
     <div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#002244] text-white"><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th>Actions</th></tr></thead><tbody id="listeCotisations"></tbody></table></div>
   </div>
 
-  <div id="terrain" class="hidden bg-white p-4 rounded-2xl border-2 border-orange-400"><div class="flex gap-2 mb-3"><input id="searchTerrain" placeholder="Chercher..." onkeyup="filtrerTerrain()" class="p-2 border rounded-lg flex-1"><select id="montantTerrain" class="p-2 border-2 border-orange-400 rounded-lg font-bold"><option value="1000">1000F</option><option value="2000" selected>2000F</option><option value="5000">5000F</option><option value="10000">10000F</option><option value="80000">80000F</option></select></div><div id="listeTerrain" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div>
-
-  <div id="admins" class="hidden bg-white p-4 rounded-2xl shadow-sm border-2 border-red-500">
-    <div class="bg-red-50 p-3 rounded-xl mb-4 border border-red-200"><h2 class="font-black text-red-700">🔐 PANNEAU SUPER ADMIN</h2><p class="text-xs text-red-600">Réservé au boss.</p></div>
-    <div class="flex gap-2 flex-wrap mb-4 bg-gray-50 p-3 rounded-xl"><input id="admin_nom" placeholder="Nom" class="p-2 border rounded"><input id="admin_email" placeholder="Email" class="p-2 border rounded"><input id="admin_password" type="password" placeholder="Mot de passe" class="p-2 border rounded"><select id="admin_role" class="p-2 border rounded font-bold"><option value="secretaire">Secrétaire</option><option value="tresorier">Trésorier</option><option value="super_admin">Super Admin</option></select><button onclick="ajouterAdmin()" class="bg-red-600 text-white px-6 py-2 rounded-xl font-black">+ Créer</button></div>
-    <div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-red-600 text-white"><th class="p-3">Nom</th><th>Email</th><th>Rôle</th><th>Date</th><th>Action</th></tr></thead><tbody id="listeAdmins"></tbody></table></div>
-  </div>
-
-  <div id="zoneAttente" class="hidden bg-red-50 border-2 border-dashed border-red-400 rounded-2xl p-4"><h3 class="font-black text-red-700">⏳ EN ATTENTE: <span id="countDetail">0</span> <button onclick="syncDonneesOffline()" class="ml-3 bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-black">FORCER SYNC</button></h3><div id="listeAttente" class="mt-3 space-y-2 text-xs"></div></div>
+  <div id="terrain" class="hidden bg-white p-4 rounded-2xl border-2 border-orange-400"><div id="listeTerrain" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div>
+  <div id="admins" class="hidden bg-white p-4 rounded-2xl shadow-sm border-2 border-red-500"><div class="flex gap-2 flex-wrap mb-4 bg-gray-50 p-3 rounded-xl"><input id="admin_nom" placeholder="Nom" class="p-2 border rounded"><input id="admin_email" placeholder="Email" class="p-2 border rounded"><input id="admin_password" type="password" placeholder="Pass" class="p-2 border rounded"><select id="admin_role" class="p-2 border rounded font-bold"><option value="secretaire">Secrétaire</option><option value="tresorier">Trésorier</option><option value="super_admin">Super Admin</option></select><button onclick="ajouterAdmin()" class="bg-red-600 text-white px-6 py-2 rounded-xl font-black">+ Créer</button></div><table class="w-full text-sm"><thead><tr class="bg-red-600 text-white"><th class="p-3">Nom</th><th>Email</th><th>Rôle</th><th>Action</th></tr></thead><tbody id="listeAdmins"></tbody></table></div>
+  <div id="zoneAttente" class="hidden bg-red-50 border-2 border-dashed border-red-400 rounded-2xl p-4"><h3 class="font-black text-red-700">⏳ EN ATTENTE LOCAL: <span id="countDetail">0</span> <button onclick="syncDonneesOffline()" class="ml-3 bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-black">FORCER SYNC VERS POSTGRES</button></h3><div id="listeAttente" class="mt-3 space-y-2 text-xs"></div><p class="text- text-gray-500 mt-2">Ces données sont dans ton téléphone. Clique FORCER SYNC pour les partager avec les autres utilisateurs sur Postgres.</p></div>
 </div>
+
+<div id="modalCarte" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 rounded-2xl"><div id="carteMembre" style="width:300px;border:2px solid #002244;border-radius:12px;padding:12px;background:white;position:relative"></div><button onclick="document.getElementById('modalCarte').classList.add('hidden')" class="mt-4 w-full bg-gray-400 text-white py-2 rounded-xl">Fermer</button></div></div>
 
 <script>
 let db, cacheMembres=[], cacheCotis=[], chartQuartier=null, chartMois=null, userRole='';
-const initDB=()=>new Promise(res=>{const r=indexedDB.open('espoir-v16-6-pro',2);r.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('membres_offline'))db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cotisations_offline'))db.createObjectStore('cotisations_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cache_membres'))db.createObjectStore('cache_membres',{keyPath:'id'});if(!db.objectStoreNames.contains('cache_cotisations'))db.createObjectStore('cache_cotisations',{keyPath:'id'})};r.onsuccess=e=>{db=e.target.result;res(db)}});
+const initDB=()=>new Promise(res=>{const r=indexedDB.open('espoir-v16-7-shared',4);r.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('membres_offline'))db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cotisations_offline'))db.createObjectStore('cotisations_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cache_membres'))db.createObjectStore('cache_membres',{keyPath:'id'});if(!db.objectStoreNames.contains('cache_cotisations'))db.createObjectStore('cache_cotisations',{keyPath:'id'});if(!db.objectStoreNames.contains('cache_photos'))db.createObjectStore('cache_photos',{keyPath:'id'})};r.onsuccess=e=>{db=e.target.result;res(db)}});
 function isOnline(){return navigator.onLine}
 function updateStatus(){document.getElementById('statusReseau').innerHTML=isOnline()?'<span class="bg-green-400 text-green-900 px-2 py-1 rounded-full text- font-black">🟢 EN LIGNE</span>':'<span class="bg-red-400 text-white px-2 py-1 rounded-full text-">🔴 OFFLINE</span>';updateBadge()}
 window.addEventListener('online',()=>{updateStatus();syncDonneesOffline()});window.addEventListener('offline',updateStatus);
-
-async function checkAuth(){
-  try{
-    const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});
-    const d=await r.json();
-    if(d.loggedIn){
-      userRole=d.role;
-      const badge=document.getElementById('userBadge');
-      badge.innerText=`👤 ${d.nom||d.email} - ${d.role.toUpperCase()}`;
-      badge.classList.remove('hidden');
-      if(d.role==='super_admin'){document.getElementById('tabAdmins').classList.remove('hidden');badge.className='bg-red-600 text-white px-2 py-1 rounded-full text- font-black';}
-    }
-  }catch(e){document.getElementById('tabAdmins').classList.add('hidden');}
-}
-
-// ===== 4 BOUTONS PRO =====
-function exportPDF(){window.location.href='/api/export/pdf-dashboard'}
-function exportMembres(){window.location.href='/api/export/membres'}
-function exportCotisations(){window.location.href='/api/export/cotisations'}
-async function importExcel(input){
-  const file=input.files[0];
-  if(!file) return;
-  if(!confirm(`Importer ${file.name}?`)) return;
-  const fd=new FormData();
-  fd.append('file',file);
-  try{
-    const r=await fetch('/api/import/membres',{method:'POST',body:fd,credentials:'include'});
-    const d=await r.json();
-    alert(d.message||`✅ ${d.count||0} membres importés!`);
-    chargerMembres();
-  }catch(e){alert('❌ Erreur import Excel');}
-  input.value='';
-}
-
-async function updateBadge(){if(!db)return;const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});const cOff=await new Promise(r=>{const q=db.transaction('cotisations_offline','readonly').objectStore('cotisations_offline').getAll();q.onsuccess=()=>r(q.result)});const total=mOff.length+cOff.length;document.getElementById('badgeAttente').innerHTML=total>0?`<span class="bg-red-600 text-white px-2 py-1 rounded-full text- font-black ml-2">🔴 ${total} EN ATTENTE</span>`:`<span class="bg-green-500 text-white px-2 py-1 rounded-full text- ml-2">✅ SYNC OK</span>`;document.getElementById('textAttentePro').innerText=total>0?`🔴 ${total} EN ATTENTE`:'✅ SYNC OK';document.getElementById('countDetail').innerText=total;document.getElementById('zoneAttente').classList.toggle('hidden',total==0);}
+async function checkAuth(){try{const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});const d=await r.json();if(d.loggedIn){userRole=d.role;const b=document.getElementById('userBadge');b.innerText=`👤 ${d.nom||d.email} - ${d.role}`;b.classList.remove('hidden');if(d.role==='super_admin')document.getElementById('tabAdmins').classList.remove('hidden');}}catch(e){}}
+async function updateBadge(){if(!db)return;const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});const cOff=await new Promise(r=>{const q=db.transaction('cotisations_offline','readonly').objectStore('cotisations_offline').getAll();q.onsuccess=()=>r(q.result)});const total=mOff.length+cOff.length;document.getElementById('badgeAttente').innerHTML=total>0?`<span class="bg-red-600 text-white px-2 py-1 rounded-full text- font-black ml-2">🔴 ${total} NON PARTAGÉS</span>`:`<span class="bg-green-500 text-white px-2 py-1 rounded-full text- ml-2">✅ PARTAGÉ</span>`;document.getElementById('textAttentePro').innerText=total>0?`🔴 ${total} NON PARTAGÉS`:'✅ PARTAGÉ';document.getElementById('subText').innerText=total>0?'Clique FORCER SYNC pour partager':'Tout le monde voit les mêmes données';document.getElementById('countDetail').innerText=total;document.getElementById('zoneAttente').classList.toggle('hidden',total==0);document.getElementById('listeAttente').innerHTML=cOff.map(c=>`<div class="bg-white p-2 rounded">💰 ${c.montant}F - #${c.membre_id}</div>`).join('')+mOff.map(m=>`<div class="bg-white p-2 rounded">👤 ${m.nom} 📸</div>`).join('')}
 async function saveOffline(s,d){const tx=db.transaction(s,'readwrite');await tx.objectStore(s).add({...d,timestamp:Date.now()});updateBadge()}
-async function reveillerServeur(){const btn=document.getElementById('btnReveil');const bar=document.getElementById('barReveil');const prog=document.getElementById('progressReveil');const log=document.getElementById('logReveil');bar.classList.remove('hidden');btn.disabled=true;let p=0;const inter=setInterval(()=>{p+=4;prog.style.width=p+'%';if(p>=100)clearInterval(inter)},800);for(let i=1;i<=20;i++){log.innerText=`Ping ${i}/20...`;try{const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});if(r.status!==502){log.innerText=`✅ Réveillé en ${i*2}s!`;prog.style.width='100%';btn.innerText='✅ REVEILLÉ';setTimeout(()=>{btn.innerText='🔧 REVEILLER';btn.disabled=false;bar.classList.add('hidden')},3000);await checkAuth();syncDonneesOffline();return}}catch(e){}await new Promise(r=>setTimeout(r,1500))}btn.disabled=false;}
-async function syncDonneesOffline(){if(!db||!isOnline())return;const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});for(const m of mOff){try{const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');if(m.photoBase64){const blob=await (await fetch(m.photoBase64)).blob();fd.append('photo',blob,'photo.jpg')}const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});if(res.ok){db.transaction('membres_offline','readwrite').objectStore('membres_offline').delete(m.tempId)}}catch(e){}}const cOff=await new Promise(r=>{const q=db.transaction('cotisations_offline','readonly').objectStore('cotisations_offline').getAll();q.onsuccess=()=>r(q.result)});for(const c of cOff){try{const res=await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:c.membre_id,montant:c.montant}),credentials:'include'});if(res.ok){db.transaction('cotisations_offline','readwrite').objectStore('cotisations_offline').delete(c.tempId)}}catch(e){}}updateBadge();if(mOff.length>0||cOff.length>0){chargerMembres();chargerCotisations();}}
-function openTab(n){if(n==='admins'&&userRole!=='super_admin'){alert('⛔ Refusé');return;}document.getElementById('membres').classList.toggle('hidden',n!='membres');document.getElementById('cotisations').classList.toggle('hidden',n!='cotisations');document.getElementById('terrain').classList.toggle('hidden',n!='terrain');document.getElementById('admins').classList.toggle('hidden',n!='admins');if(n==='admins')chargerAdmins();}
+async function reveillerServeur(){const btn=document.getElementById('btnReveil');const bar=document.getElementById('barReveil');const prog=document.getElementById('progressReveil');const log=document.getElementById('logReveil');bar.classList.remove('hidden');btn.disabled=true;let p=0;const inter=setInterval(()=>{p+=4;prog.style.width=p+'%';if(p>=100)clearInterval(inter)},800);for(let i=1;i<=20;i++){log.innerText=`Ping ${i}/20 Postgres...`;try{const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});if(r.status!==502){log.innerText=`✅ Postgres réveillé! Partage activé`;prog.style.width='100%';btn.innerText='✅ RÉVEILLÉ';setTimeout(()=>{btn.innerText='🔧 REVEILLER';btn.disabled=false;bar.classList.add('hidden')},3000);await checkAuth();chargerMembres();chargerCotisations();syncDonneesOffline();return}}catch(e){}await new Promise(r=>setTimeout(r,1500))}btn.disabled=false;}
+// ===== SYNC PARTAGE V16.7 =====
+async function syncDonneesOffline(){
+  if(!isOnline())return alert('Pas de réseau');
+  document.getElementById('syncInfo').innerText='🔄 Partage en cours...';
+  const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});
+  for(const m of mOff){
+    try{
+      const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');
+      if(m.photoBase64){const blob=await (await fetch(m.photoBase64)).blob();fd.append('photo',blob,'photo.jpg');}
+      const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});
+      if(res.ok){
+        const json=await res.json();
+        // Sauve la photo locale avec le vrai ID Postgres
+        if(m.photoBase64 && json.id){
+          const tx=db.transaction('cache_photos','readwrite');tx.objectStore('cache_photos').put({id:json.id,photoBase64:m.photoBase64});
+        }
+        db.transaction('membres_offline','readwrite').objectStore('membres_offline').delete(m.tempId);
+      }
+    }catch(e){}
+  }
+  const cOff=await new Promise(r=>{const q=db.transaction('cotisations_offline','readonly').objectStore('cotisations_offline').getAll();q.onsuccess=()=>r(q.result)});
+  for(const c of cOff){
+    try{
+      const res=await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:c.membre_id,montant:c.montant}),credentials:'include'});
+      if(res.ok){db.transaction('cotisations_offline','readwrite').objectStore('cotisations_offline').delete(c.tempId);}
+    }catch(e){}
+  }
+  updateBadge();
+  document.getElementById('syncInfo').innerText='✅ Partagé';
+  if(mOff.length>0||cOff.length>0){alert(`✅ ${mOff.length+cOff.length} éléments PARTAGÉS sur Postgres! Les autres utilisateurs les voient maintenant.`);}
+  chargerMembres();chargerCotisations();
+}
+
+function openTab(n){if(n==='admins'&&userRole!=='super_admin'){alert('⛔ Super admin only');return;}document.getElementById('membres').classList.toggle('hidden',n!='membres');document.getElementById('cotisations').classList.toggle('hidden',n!='cotisations');document.getElementById('terrain').classList.toggle('hidden',n!='terrain');document.getElementById('admins').classList.toggle('hidden',n!='admins');if(n==='admins')chargerAdmins();}
 function fileToBase64(f){return new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(f)})}
-async function chargerMembres(s=''){try{const r=await fetch(`/api/membres?search=${encodeURIComponent(s||'')}`,{credentials:'include'});if(r.ok){const d=await r.json();if(!s){const tx=db.transaction('cache_membres','readwrite');const st=tx.objectStore('cache_membres');await st.clear();d.forEach(m=>st.put(m));cacheMembres=d}else cacheMembres=d;afficherMembres(d);chargerStats();return}}catch(e){}const tx=db.transaction('cache_membres','readonly');const q=tx.objectStore('cache_membres').getAll();q.onsuccess=()=>{let data=q.result;if(s)data=data.filter(m=>m.nom.toLowerCase().includes(s.toLowerCase()));cacheMembres=q.result;afficherMembres(data);chargerStats()}}
-function afficherMembres(data){document.getElementById('listeMembres').innerHTML=data.map(m=>{const src=m.photoBase64||(m.photo?`/uploads/${m.photo}`:'');return `<tr class="border-b"><td class="p-2">${src?`<img src="${src}" class="photo-rond" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.nom)}'">`:'👤'}</td><td class="p-2 font-bold">${m.nom}</td><td class="p-2">${m.telephone||''}</td><td class="p-2">${m.quartier||''}</td><td class="p-2 text-xs">${new Date(m.date_inscription||Date.now()).toLocaleDateString()}</td><td class="p-2"><div class="flex gap-1"><button onclick="voirCarte(${m.id})" class="bg-[#7C3AED] text-white px-2 py-1 rounded-full text-xs">💳</button><button onclick="ouvrirWhatsApp('${(m.telephone||'').replace(/'/g,"")}','${m.nom.replace(/'/g,"\\'")}')" class="bg-[#25D366] text-white px-2 py-1 rounded-full text-xs">💚</button><button onclick="supprimerMembre(${m.id})" class="bg-red-500 text-white px-2 py-1 rounded-full text-xs">🗑</button></div></td></tr>`}).join('');document.getElementById('membre_id').innerHTML='<option value="">-- Choisir --</option>'+data.map(m=>`<option value="${m.id}">${m.nom}</option>`).join('');afficherTerrain(data)}
-async function chargerCotisations(){try{const r=await fetch('/api/cotisations',{credentials:'include'});if(r.ok){const d=await r.json();const tx=db.transaction('cache_cotisations','readwrite');const st=tx.objectStore('cache_cotisations');await st.clear();d.forEach(c=>st.put(c));cacheCotis=d;afficherCotis(d);chargerStats();return}}catch(e){}const tx=db.transaction('cache_cotisations','readonly');const q=tx.objectStore('cache_cotisations').getAll();q.onsuccess=()=>{cacheCotis=q.result;afficherCotis(q.result);chargerStats()}}
+
+// ===== CHARGEMENT PARTAGÉ V16.7 - SOURCE DE VERITE = POSTGRES =====
+async function chargerMembres(search=''){
+  if(isOnline()){
+    try{
+      const r=await fetch(`/api/membres?search=${encodeURIComponent(search||'')}`,{credentials:'include',cache:'no-store'});
+      if(r.ok){
+        const data=await r.json();
+        // Merge photos locales
+        const photos=await new Promise(res=>{const q=db.transaction('cache_photos','readonly').objectStore('cache_photos').getAll();q.onsuccess=()=>res(q.result)});
+        const photoMap={};photos.forEach(p=>photoMap[p.id]=p.photoBase64);
+        data.forEach(m=>{if(photoMap[m.id]) m.photoBase64=photoMap[m.id];});
+        // Sauve dans cache
+        const tx=db.transaction('cache_membres','readwrite');const st=tx.objectStore('cache_membres');await st.clear();data.forEach(m=>st.put(m));
+        cacheMembres=data;
+        afficherMembres(search?data.filter(m=>m.nom.toLowerCase().includes(search.toLowerCase())):data);
+        chargerStats();
+        document.getElementById('syncInfo').innerText=`📡 ${data.length} membres partagés`;
+        return;
+      }
+    }catch(e){console.log('fetch serveur fail, fallback cache',e)}
+  }
+  // OFFLINE: affiche cache
+  const tx=db.transaction('cache_membres','readonly');const q=tx.objectStore('cache_membres').getAll();q.onsuccess=async()=>{
+    let data=q.result;
+    const photos=await new Promise(res=>{const qq=db.transaction('cache_photos','readonly').objectStore('cache_photos').getAll();qq.onsuccess=()=>res(qq.result)});
+    const photoMap={};photos.forEach(p=>photoMap[p.id]=p.photoBase64);
+    data.forEach(m=>{if(photoMap[m.id]) m.photoBase64=photoMap[m.id];});
+    if(search) data=data.filter(m=>m.nom.toLowerCase().includes(search.toLowerCase()));
+    cacheMembres=q.result;afficherMembres(data);chargerStats();
+  }
+}
+
+function afficherMembres(data){
+  document.getElementById('listeMembres').innerHTML=data.map(m=>{
+    const src=m.photoBase64||(m.photo?`/uploads/${m.photo}`:'');
+    return `<tr class="border-b hover:bg-gray-50"><td class="p-2">${src?`<img src="${src}" class="photo-rond" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.nom)}'">`:'👤'}</td><td class="p-2 font-bold">${m.nom}</td><td class="p-2">${m.telephone||''}</td><td class="p-2">${m.quartier||''}</td><td class="p-2 text-xs">${new Date(m.date_inscription||Date.now()).toLocaleDateString()}</td><td class="p-2"><div class="flex gap-1"><button onclick="voirCarte(${m.id})" class="bg-[#7C3AED] text-white px-2 py-1 rounded-full text-xs">💳</button><button onclick="ouvrirWhatsApp('${(m.telephone||'').replace(/'/g,"")}','${m.nom.replace(/'/g,"\\'")}')" class="bg-[#25D366] text-white px-2 py-1 rounded-full text-xs">💚</button><button onclick="supprimerMembre(${m.id})" class="bg-red-500 text-white px-2 py-1 rounded-full text-xs">🗑</button></div></td></tr>`
+  }).join('')||`<tr><td colspan=6 class="p-8 text-center text-gray-400">Aucun membre partagé. Ajoute un membre et clique FORCER SYNC.</td></tr>`;
+  document.getElementById('membre_id').innerHTML='<option value="">-- Choisir --</option>'+data.map(m=>`<option value="${m.id}">${m.nom}</option>`).join('');afficherTerrain(data)
+}
+
+async function chargerCotisations(){
+  if(isOnline()){
+    try{
+      const r=await fetch('/api/cotisations',{credentials:'include',cache:'no-store'});
+      if(r.ok){
+        const d=await r.json();
+        const tx=db.transaction('cache_cotisations','readwrite');const st=tx.objectStore('cache_cotisations');await st.clear();d.forEach(c=>st.put(c));
+        cacheCotis=d;afficherCotis(d);chargerStats();return;
+      }
+    }catch(e){}
+  }
+  const tx=db.transaction('cache_cotisations','readonly');const q=tx.objectStore('cache_cotisations').getAll();q.onsuccess=()=>{cacheCotis=q.result;afficherCotis(q.result);chargerStats()}
+}
 function afficherCotis(data){document.getElementById('listeCotisations').innerHTML=data.map(c=>`<tr class="border-b"><td class="p-2">${c.nom||'Membre #'+c.membre_id}</td><td class="p-2">${c.quartier||''}</td><td class="p-2 font-bold">${(c.montant||0).toLocaleString()} F</td><td class="p-2 text-xs">${new Date(c.date_cotisation||c.date||Date.now()).toLocaleDateString()}</td><td class="p-2"><button onclick="envoyerRecu('${c.telephone||''}','${(c.nom||'').replace(/'/g,"")}',${c.montant||0})" class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">💚</button></td></tr>`).join('')}
-function chargerStats(){document.getElementById('totalMembres').innerText=cacheMembres.length;document.getElementById('totalCotisations').innerText=cacheCotis.reduce((a,b)=>a+(b.montant||0),0).toLocaleString()+' FCFA';document.getElementById('totalQuartiers').innerText=[...new Set(cacheMembres.map(m=>m.quartier).filter(Boolean))].length;const ctx1=document.getElementById('chartQuartier');if(chartQuartier)chartQuartier.destroy();const qMap={};cacheMembres.forEach(m=>{qMap[m.quartier||'Autre']=(qMap[m.quartier||'Autre']||0)+1});if(Object.keys(qMap).length>0)chartQuartier=new Chart(ctx1,{type:'pie',data:{labels:Object.keys(qMap),datasets:[{data:Object.values(qMap),backgroundColor:['#002244','#059669','#F59E0B','#EF4444']}]}});const ctx2=document.getElementById('chartMois');if(chartMois)chartMois.destroy();const mMap={};cacheCotis.forEach(c=>{const mois=(c.date_cotisation||c.date||'').toString().slice(0,7)||'2026-07';mMap[mois]=(mMap[mois]||0)+c.montant});if(Object.keys(mMap).length>0)chartMois=new Chart(ctx2,{type:'bar',data:{labels:Object.keys(mMap),datasets:[{label:'FCFA',data:Object.values(mMap),backgroundColor:'#002244'}]}})}
+function chargerStats(){document.getElementById('totalMembres').innerText=cacheMembres.length;const total=cacheCotis.reduce((a,b)=>a+(b.montant||0),0);document.getElementById('totalCotisations').innerText=total.toLocaleString()+' FCFA';document.getElementById('totalQuartiers').innerText=[...new Set(cacheMembres.map(m=>m.quartier).filter(Boolean))].length;const ctx1=document.getElementById('chartQuartier');if(chartQuartier)chartQuartier.destroy();const qMap={};cacheMembres.forEach(m=>{qMap[m.quartier||'Autre']=(qMap[m.quartier||'Autre']||0)+1});if(Object.keys(qMap).length>0)chartQuartier=new Chart(ctx1,{type:'pie',data:{labels:Object.keys(qMap),datasets:[{data:Object.values(qMap),backgroundColor:['#002244','#059669','#F59E0B','#EF4444']}]}});const ctx2=document.getElementById('chartMois');if(chartMois)chartMois.destroy();const mMap={};cacheCotis.forEach(c=>{const mois=(c.date_cotisation||c.date||'').toString().slice(0,7)||'2026-07';mMap[mois]=(mMap[mois]||0)+c.montant});if(Object.keys(mMap).length>0)chartMois=new Chart(ctx2,{type:'bar',data:{labels:Object.keys(mMap),datasets:[{label:'FCFA',data:Object.values(mMap),backgroundColor:'#002244'}]}})}
 function afficherTerrain(data){document.getElementById('listeTerrain').innerHTML=data.map(m=>`<div class="border p-3 rounded-xl flex justify-between items-center bg-white"><div class="flex gap-2 items-center">${m.photoBase64||m.photo?`<img src="${m.photoBase64||'/uploads/'+m.photo}" class="w-10 h-10 rounded-full object-cover">`:'👤'}<div><b class="text-sm">${m.nom}</b><br><small>${m.quartier||''}</small></div></div><button onclick="encaisserTerrain(${m.id})" class="bg-green-600 text-white px-4 py-2 rounded-full font-black">💰</button></div>`).join('')}
-function filtrerTerrain(){const q=document.getElementById('searchTerrain').value.toLowerCase();afficherTerrain(cacheMembres.filter(m=>m.nom.toLowerCase().includes(q)))}
-async function encaisserTerrain(id){const montant=parseInt(document.getElementById('montantTerrain').value);const mem=cacheMembres.find(m=>m.id==id);const data={id:Date.now(),tempId:Date.now(),membre_id:id,montant,nom:mem?.nom||'',date_cotisation:new Date().toISOString()};const tx=db.transaction('cache_cotisations','readwrite');tx.objectStore('cache_cotisations').put(data);cacheCotis.push(data);afficherCotis(cacheCotis);chargerStats();if(!isOnline())await saveOffline('cotisations_offline',data);else{try{await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:id,montant}),credentials:'include'})}catch(e){await saveOffline('cotisations_offline',data)}}updateBadge()}
-document.getElementById('formMembre').addEventListener('submit',async e=>{e.preventDefault();const nom=document.getElementById('nom').value.trim();const telephone=document.getElementById('telephone').value;const quartier=document.getElementById('quartier').value;const file=document.getElementById('photo').files[0];let photoBase64='';if(file)photoBase64=await fileToBase64(file);if(!nom)return;const newM={id:Date.now(),nom,telephone,quartier,photo:file?.name||'',photoBase64,date_inscription:new Date().toISOString()};const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').put(newM);cacheMembres.push(newM);afficherMembres(cacheMembres);chargerStats();e.target.reset();if(!isOnline()){await saveOffline('membres_offline',newM);}else{try{const fd=new FormData();fd.append('nom',nom);fd.append('telephone',telephone);fd.append('quartier',quartier);if(file)fd.append('photo',file);await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'})}catch(err){await saveOffline('membres_offline',newM)}}updateBadge()});
-function ouvrirWhatsApp(tel,nom){if(!tel)return;const n=tel.replace(/\s/g,'').replace('+','');window.open(`https://wa.me/${n}?text=${encodeURIComponent('Bonjour '+nom)}`,'_blank')}
-function envoyerRecu(tel,nom,m){if(!tel)return;const n=tel.replace(/\s/g,'').replace('+','');window.open(`https://wa.me/${n}?text=${encodeURIComponent('Reçu '+m+' FCFA pour '+nom)}`,'_blank')}
-function voirCarte(id){const m=cacheMembres.find(x=>x.id==id);if(!m)return;const src=m.photoBase64|| (m.photo?`/uploads/${m.photo}`:'');document.getElementById('carteMembre').innerHTML=`<div style="width:300px;border:2px solid #002244;border-radius:12px;padding:12px;background:white;position:relative"><b>ONG ESPOIR CITOYEN</b><br><b>${m.nom}</b><br>${m.quartier||''}<br>${m.telephone||''}<br><small>ID: ${m.id}</small>${src?`<img src="${src}" style="width:70px;height:70px;border-radius:50%;position:absolute;top:10px;right:10px;object-fit:cover">`:''}</div>`;document.getElementById('modalCarte').classList.remove('hidden')}
-async function supprimerMembre(id){if(!confirm('Supprimer?'))return;const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').delete(id);cacheMembres=cacheMembres.filter(m=>m.id!=id);afficherMembres(cacheMembres);chargerStats();try{await fetch(`/api/membres/${id}`,{method:'DELETE',credentials:'include'})}catch(e){}}
+
+function exportPDF(){window.location.href='/api/export/pdf-dashboard'}function exportMembres(){window.location.href='/api/export/membres'}function exportCotisations(){window.location.href='/api/export/cotisations'}async function importExcel(i){const f=i.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);try{const r=await fetch('/api/import/membres',{method:'POST',body:fd,credentials:'include'});const d=await r.json();alert(`✅ ${d.count||0} importés et PARTAGÉS!`);chargerMembres();}catch(e){alert('❌ Erreur')}i.value='';}
+
+document.getElementById('formMembre').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const nom=document.getElementById('nom').value.trim();const tel=document.getElementById('telephone').value;const quartier=document.getElementById('quartier').value;const file=document.getElementById('photo').files[0];let b64='';if(file) b64=await fileToBase64(file);
+  if(!nom)return;
+  if(!isOnline()){
+    const newM={id:Date.now(),tempId:Date.now(),nom,telephone:tel,quartier,photoBase64:b64,date_inscription:new Date().toISOString()};
+    await saveOffline('membres_offline',newM);
+    const tx=db.transaction('cache_photos','readwrite');tx.objectStore('cache_photos').put({id:newM.id,photoBase64:b64});
+    const tx2=db.transaction('cache_membres','readwrite');tx2.objectStore('cache_membres').put(newM);
+    alert('📴 Sauvé local - sera partagé au prochain FORCER SYNC');
+  } else {
+    try{
+      const fd=new FormData();fd.append('nom',nom);fd.append('telephone',tel);fd.append('quartier',quartier);if(file)fd.append('photo',file);
+      const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});
+      const json=await res.json();
+      if(b64 && json.id){const tx=db.transaction('cache_photos','readwrite');tx.objectStore('cache_photos').put({id:json.id,photoBase64:b64});}
+      alert('✅ Membre AJOUTÉ et PARTAGÉ sur Postgres! Tous les utilisateurs le voient.');
+    }catch(err){
+      const newM={id:Date.now(),tempId:Date.now(),nom,telephone:tel,quartier,photoBase64:b64,date_inscription:new Date().toISOString()};
+      await saveOffline('membres_offline',newM);
+      alert('⚠️ Serveur lent, sauvé local - clique FORCER SYNC');
+    }
+  }
+  e.target.reset();updateBadge();chargerMembres();
+});
+
+function ouvrirWhatsApp(t,n){if(!t)return;window.open(`https://wa.me/${t.replace(/\s/g,'').replace('+','')}?text=${encodeURIComponent('Bonjour '+n)}`,'_blank')}
+function envoyerRecu(t,n,m){if(!t)return;window.open(`https://wa.me/${t.replace(/\s/g,'').replace('+','')}?text=${encodeURIComponent('Reçu '+m+' FCFA pour '+n)}`,'_blank')}
+function voirCarte(id){const m=cacheMembres.find(x=>x.id==id);if(!m)return;const src=m.photoBase64||(m.photo?`/uploads/${m.photo}`:'');document.getElementById('carteMembre').innerHTML=`<b>ONG ESPOIR CITOYEN</b><br><b>${m.nom}</b><br>${m.quartier||''}<br>${m.telephone||''}<br><small>ID: ${m.id}</small>${src?`<img src="${src}" style="width:70px;height:70px;border-radius:50%;position:absolute;top:10px;right:10px;object-fit:cover;border:2px solid #002244">`:''}`;document.getElementById('modalCarte').classList.remove('hidden')}
+async function supprimerMembre(id){if(!confirm('Supprimer? Ce sera supprimé pour TOUS les utilisateurs!'))return;try{await fetch(`/api/membres/${id}`,{method:'DELETE',credentials:'include'});alert('✅ Supprimé et partagé');}catch(e){}const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').delete(id);chargerMembres();}
+async function ajouterCotisation(){const mid=document.getElementById('membre_id').value;const mont=document.getElementById('montant').value;if(!mid||!mont)return;if(!isOnline()){const data={tempId:Date.now(),membre_id:parseInt(mid),montant:parseInt(mont)};await saveOffline('cotisations_offline',data);alert('📴 Sauvé local');}else{try{await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:parseInt(mid),montant:parseInt(mont)}),credentials:'include'});alert('✅ Cotisation PARTAGÉE');}catch(e){await saveOffline('cotisations_offline',{tempId:Date.now(),membre_id:parseInt(mid),montant:parseInt(mont)});}}document.getElementById('montant').value='';chargerCotisations();}
+async function encaisserTerrain(id){const m=document.getElementById('montantTerrain')?parseInt(document.getElementById('montantTerrain').value):2000;await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:id,montant:m}),credentials:'include'});chargerCotisations();}
 function logout(){fetch('/api/logout',{method:'POST',credentials:'include'}).then(()=>location.reload())}
-async function chargerAdmins(){if(userRole!=='super_admin')return;try{const r=await fetch('/api/admins',{credentials:'include'});const d=await r.json();document.getElementById('listeAdmins').innerHTML=d.map(a=>`<tr><td class="p-2">${a.nom}</td><td>${a.email}</td><td>${a.role}</td><td class="p-2 text-xs">${new Date(a.date_creation).toLocaleDateString()}</td><td><button onclick="supprimerAdmin(${a.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">🗑</button></td></tr>`).join('')}catch(e){}}
+async function chargerAdmins(){try{const r=await fetch('/api/admins',{credentials:'include'});const d=await r.json();document.getElementById('listeAdmins').innerHTML=d.map(a=>`<tr><td class="p-2">${a.nom}</td><td>${a.email}</td><td>${a.role}</td><td><button onclick="supprimerAdmin(${a.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">🗑</button></td></tr>`).join('')}catch{}}
 async function ajouterAdmin(){const nom=document.getElementById('admin_nom').value;const email=document.getElementById('admin_email').value;const password=document.getElementById('admin_password').value;const role=document.getElementById('admin_role').value;await fetch('/api/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom,email,password,role}),credentials:'include'});chargerAdmins();}
-async function supprimerAdmin(id){if(!confirm('Supprimer?'))return;await fetch(`/api/admins/${id}`,{method:'DELETE',credentials:'include'});chargerAdmins();}
-async function ajouterCotisation(){const membre_id=document.getElementById('membre_id').value;const montant=document.getElementById('montant').value;if(!membre_id||!montant)return;const mem=cacheMembres.find(m=>m.id==parseInt(membre_id));const data={id:Date.now(),tempId:Date.now(),membre_id:parseInt(membre_id),montant:parseInt(montant),nom:mem?.nom||'',date_cotisation:new Date().toISOString()};const tx=db.transaction('cache_cotisations','readwrite');tx.objectStore('cache_cotisations').put(data);cacheCotis.push(data);afficherCotis(cacheCotis);chargerStats();document.getElementById('montant').value='';if(!isOnline()){await saveOffline('cotisations_offline',data)}else{try{await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:data.membre_id,montant:data.montant}),credentials:'include'})}catch(e){await saveOffline('cotisations_offline',data)}}updateBadge();}
-(async()=>{await initDB();await checkAuth();updateStatus();await chargerMembres();await chargerCotisations();setInterval(updateBadge,2000)})();
+async function supprimerAdmin(id){await fetch(`/api/admins/${id}`,{method:'DELETE',credentials:'include'});chargerAdmins();}
+
+// AUTO REFRESH PARTAGE TOUTES LES 15s
+setInterval(()=>{if(isOnline()&&document.visibilityState==='visible'){chargerMembres();chargerCotisations();}},15000);
+
+(async()=>{await initDB();await checkAuth();updateStatus();await chargerMembres();await chargerCotisations();updateBadge();})();
 </script>
-<div id="modalCarte" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4"><div class="bg-white p-6 rounded-2xl"><div id="carteMembre"></div><button onclick="document.getElementById('modalCarte').classList.add('hidden')" class="mt-4 w-full bg-gray-400 text-white py-2 rounded-xl">Fermer</button></div></div>
 </body>
 </html>

@@ -1,91 +1,58 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>V16.8 FIX AJOUT</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.tailwindcss.com"></script><style>.photo-rond{width:40px;height:40px;border-radius:50%;object-fit:cover}</style></head>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>V17.0 STABLE SHARED</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.tailwindcss.com"></script><style>.photo-rond{width:44px;height:44px;border-radius:50%;object-fit:cover}</style></head>
 <body class="bg-[#f1f5f9]">
-<div class="bg-[#002244] text-white p-4 sticky top-0 z-50">
-<div class="flex justify-between items-center"><h1 class="font-black text-sm">🇨🇮 V16.8 FIX AJOUT MEMBRE <span id="badgeAttente"></span></h1><div class="flex gap-2"><span id="statusReseau" class="bg-green-500 px-2 py-1 rounded-full text-xs">🟢 EN LIGNE</span><button onclick="reveillerServeur()" id="btnReveil" class="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-black">🔧 REVEILLER</button></div></div>
-<div class="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3"><div class="bg-white/10 p-3 rounded-2xl"><p class="text- opacity-60">TOTAL MEMBRES</p><p id="totalMembres" class="text-xl font-black">0</p><p class="text-">Partagé Postgres</p></div><div class="bg-white/10 p-3 rounded-2xl"><p class="text- opacity-60">TOTAL COTISATIONS</p><p id="totalCotisations" class="text-xl font-black">0 FCFA</p></div><div class="bg-white/10 p-3 rounded-2xl"><p class="text- opacity-60">QUARTIERS</p><p id="totalQuartiers" class="text-xl font-black">0</p></div><div id="cardAttentePro" class="bg-green-500 p-3 rounded-2xl"><p id="textAttentePro" class="text-sm font-black">✅ PARTAGÉ</p><p id="subText" class="text-">Tout le monde voit pareil</p></div></div>
-<div class="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3"><button onclick="exportPDF()" class="bg-red-600 text-white px-3 py-3 rounded-xl font-black text-xs">📄 Tableau de Bord PDF</button><button onclick="exportMembres()" class="bg-green-600 text-white px-3 py-3 rounded-xl font-black text-xs">📊 Export Membres Excel</button><label class="bg-blue-600 text-white px-3 py-3 rounded-xl font-black text-xs text-center cursor-pointer">📥 Import Excel<input type="file" id="importExcel" accept=".xlsx,.xls" class="hidden" onchange="importExcel(this)"></label><button onclick="exportCotisations()" class="bg-yellow-400 text-black px-3 py-3 rounded-xl font-black text-xs">💰 Export Cotisations</button></div>
-<div id="barReveil" class="hidden mt-2"><div class="w-full bg-black/30 h-2 rounded-full"><div id="progressReveil" class="bg-yellow-400 h-2 rounded-full" style="width:0%"></div></div><p id="logReveil" class="text-xs"></p></div>
-</div>
+<div class="bg-[#002244] text-white p-4 sticky top-0 z-50"><div class="flex justify-between"><h1 class="font-black">🇨🇮 V17.0 STABLE - NE CHANGE PLUS</h1><div class="flex gap-2"><span id="statusReseau" class="bg-green-500 px-2 py-1 rounded-full text-xs">🟢</span><span id="badgeAttente"></span><button onclick="reveillerServeur()" id="btnReveil" class="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-black">🔧 REVEILLER</button><button onclick="forcerRefreshPostgres()" class="bg-white text-black px-3 py-1 rounded-full text-xs font-bold">🔄 RECHARGER POSTGRES</button></div></div><div class="mt-3 grid grid-cols-4 gap-3 text-center"><div class="bg-white/10 p-3 rounded-xl"><p class="text-">TOTAL MEMBRES</p><p id="totalMembres" class="text-xl font-black">0</p><p id="sourceData" class="text- opacity-60">Source: Postgres</p></div><div class="bg-white/10 p-3 rounded-xl"><p class="text-">COTISATIONS</p><p id="totalCotisations" class="text-xl font-black">0</p></div><div class="bg-white/10 p-3 rounded-xl"><p class="text-">QUARTIERS</p><p id="totalQuartiers" class="text-xl font-black">0</p></div><div id="cardAttentePro" class="bg-green-500 p-3 rounded-xl"><p id="textAttentePro" class="text-sm font-black">✅</p><p id="subText" class="text-"></p></div></div><div class="mt-3 grid grid-cols-4 gap-2"><button onclick="exportPDF()" class="bg-red-600 text-white py-2 rounded-xl text-xs font-black">📄 PDF</button><button onclick="exportMembres()" class="bg-green-600 text-white py-2 rounded-xl text-xs font-black">📊 Excel Membres</button><label class="bg-blue-600 text-white py-2 rounded-xl text-xs font-black text-center">📥 Import<input type="file" class="hidden" onchange="importExcel(this)"></label><button onclick="exportCotisations()" class="bg-yellow-400 text-black py-2 rounded-xl text-xs font-black">💰 Excel Cotis</button></div><div id="barReveil" class="hidden mt-2"><div class="w-full bg-black/30 h-2 rounded-full"><div id="progressReveil" class="bg-yellow-400 h-2 rounded-full" style="width:0%"></div></div><p id="logReveil" class="text-xs"></p></div></div>
 <div class="max-w- mx-auto p-4 space-y-4">
-<div class="flex gap-2"><button onclick="openTab('membres')" class="px-5 py-3 rounded-xl bg-[#002244] text-white font-bold text-sm">👥 Membres</button><button onclick="openTab('cotisations')" class="px-5 py-3 rounded-xl bg-white font-bold text-sm">💰 Cotisations</button><button onclick="openTab('terrain')" class="px-5 py-3 rounded-xl bg-[#FF9A00] text-white font-black text-sm">⚡ TERRAIN</button><button id="tabAdmins" onclick="openTab('admins')" class="hidden px-5 py-3 rounded-xl bg-red-600 text-white font-black text-sm">🔐 SUPER ADMIN</button></div>
-<div id="membres" class="bg-white p-4 rounded-2xl shadow-sm">
-<form id="formMembre" class="flex gap-2 flex-wrap mb-4 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-400"><input id="nom" placeholder="Nom *" required class="p-3 border-2 rounded-xl flex-1 font-bold"><input id="telephone" placeholder="WhatsApp" class="p-2 border rounded-lg"><input id="quartier" placeholder="Quartier" class="p-2 border rounded-lg"><input type="file" id="photo" accept="image/*" class="p-2 border rounded bg-white text-xs"><button type="submit" id="btnAjout" class="bg-[#002244] text-white px-6 py-3 rounded-xl font-black">+ AJOUTER & PARTAGER</button></form>
-<div id="logAjout" class="text-xs text-red-600 mb-2"></div>
-<input id="search" placeholder="🔍 Rechercher..." onkeyup="chargerMembres(document.getElementById('search').value)" class="p-2 border rounded-lg w-full max-w-xs mb-3">
-<div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="bg-[#002244] text-white"><th class="p-3">Photo</th><th>Nom</th><th>Tél</th><th>Quartier</th><th>Date</th><th>Actions</th></tr></thead><tbody id="listeMembres"></tbody></table></div>
-</div>
-<div id="cotisations" class="hidden bg-white p-4 rounded-2xl"><div class="flex gap-2 mb-4"><select id="membre_id" class="p-3 border rounded-xl flex-1"><option value="">-- Choisir --</option></select><input id="montant" type="number" placeholder="Montant" class="p-3 border-2 border-green-500 rounded-xl"><button onclick="ajouterCotisation()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-black">💰 ENREGISTRER</button></div><table class="w-full text-sm"><thead><tr class="bg-[#002244] text-white"><th>Membre</th><th>Montant</th><th>Date</th><th>Actions</th></tr></thead><tbody id="listeCotisations"></tbody></table></div>
-<div id="terrain" class="hidden bg-white p-4 rounded-2xl border-2 border-orange-400"><div id="listeTerrain" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div></div>
-<div id="admins" class="hidden bg-white p-4 rounded-2xl border-2 border-red-500"><div id="listeAdmins"></div></div>
-<div id="zoneAttente" class="hidden bg-red-50 border-2 border-dashed border-red-400 rounded-2xl p-4"><h3 class="font-black text-red-700">⏳ EN ATTENTE: <span id="countDetail">0</span> <button onclick="syncDonneesOffline()" class="ml-3 bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-black">FORCER SYNC</button></h3><div id="listeAttente" class="mt-3 space-y-2 text-xs"></div></div>
+<div id="membres" class="bg-white p-4 rounded-2xl"><form id="formMembre" class="flex gap-2 flex-wrap mb-4 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-400"><input id="nom" placeholder="Nom *" required class="p-3 border-2 rounded-xl flex-1 font-bold"><input id="telephone" placeholder="WhatsApp" class="p-2 border rounded"><input id="quartier" placeholder="Quartier" class="p-2 border rounded"><input type="file" id="photo" accept="image/*" class="p-2 border rounded bg-white text-xs"><button type="submit" id="btnAjout" class="bg-[#002244] text-white px-6 py-3 rounded-xl font-black">+ AJOUTER</button></form><div id="logAjout" class="text-xs mb-2"></div><table class="w-full text-sm"><thead><tr class="bg-[#002244] text-white"><th class="p-3">Photo</th><th>Nom</th><th>Tél</th><th>Quartier</th><th>Date</th><th>Actions</th></tr></thead><tbody id="listeMembres"></tbody></table></div>
+<div id="zoneAttente" class="hidden bg-red-50 border-2 border-dashed border-red-400 rounded-xl p-3"><h3 class="font-bold text-red-700">⏳ EN ATTENTE LOCALE: <span id="countDetail">0</span> <button onclick="syncDonneesOffline()" class="ml-2 bg-red-600 text-white px-3 py-1 rounded-full text-xs">FORCER SYNC</button></h3><p class="text-">Ces membres sont dans ton téléphone, pas encore sur Postgres. Ils ne sont pas visibles par les autres.</p><div id="listeAttente" class="text-xs mt-2"></div></div>
 </div>
 <script>
-let db, cacheMembres=[], cacheCotis=[], userRole='';
-const initDB=()=>new Promise(res=>{const r=indexedDB.open('espoir-v16-8-fix',2);r.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('membres_offline'))db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cotisations_offline'))db.createObjectStore('cotisations_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cache_membres'))db.createObjectStore('cache_membres',{keyPath:'id'});if(!db.objectStoreNames.contains('cache_cotisations'))db.createObjectStore('cache_cotisations',{keyPath:'id'})};r.onsuccess=e=>{db=e.target.result;res(db)}});
-function isOnline(){return navigator.onLine}
+let db, cacheMembres=[];
+const initDB=()=>new Promise(res=>{const r=indexedDB.open('ESPOIR-CITOYEN-FINAL-STABLE',2);r.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('membres_offline'))db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cache_membres'))db.createObjectStore('cache_membres',{keyPath:'id'})};r.onsuccess=e=>{db=e.target.result;res(db)}});
 function fileToBase64(f){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(f)})}
-async function checkAuth(){try{const r=await fetch('/api/check-auth',{credentials:'include'});const d=await r.json();if(d.loggedIn){userRole=d.role;if(d.role==='super_admin')document.getElementById('tabAdmins').classList.remove('hidden')}}catch(e){}}
-async function updateBadge(){if(!db)return;const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});const total=mOff.length;document.getElementById('badgeAttente').innerHTML=total>0?`<span class="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-black ml-2">🔴 ${total} EN ATTENTE</span>`:`<span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs ml-2">✅ PARTAGÉ</span>`;document.getElementById('countDetail').innerText=total;document.getElementById('zoneAttente').classList.toggle('hidden',total==0);document.getElementById('listeAttente').innerHTML=mOff.map(m=>`<div class="bg-white p-2 rounded border">👤 ${m.nom} 📸</div>`).join('')}
+async function updateBadge(){if(!db)return;const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});document.getElementById('badgeAttente').innerHTML=mOff.length>0?`<span class="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-black">🔴 ${mOff.length} LOCAL</span>`:`<span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">✅ POSTGRES</span>`;document.getElementById('countDetail').innerText=mOff.length;document.getElementById('zoneAttente').classList.toggle('hidden',mOff.length==0);document.getElementById('listeAttente').innerHTML=mOff.map(m=>`<div>👤 ${m.nom}</div>`).join('')}
 async function saveOffline(s,d){const tx=db.transaction(s,'readwrite');await tx.objectStore(s).add({...d,timestamp:Date.now()});updateBadge()}
-async function reveillerServeur(){const btn=document.getElementById('btnReveil');const bar=document.getElementById('barReveil');const prog=document.getElementById('progressReveil');const log=document.getElementById('logReveil');bar.classList.remove('hidden');btn.disabled=true;for(let i=1;i<=20;i++){log.innerText=`Ping ${i}/20 Render...`;prog.style.width=(i*5)+'%';try{const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});if(r.status!==502){log.innerText=`✅ Réveillé!`;btn.innerText='✅ REVEILLÉ';setTimeout(()=>{btn.innerText='🔧 REVEILLER';btn.disabled=false;bar.classList.add('hidden')},3000);syncDonneesOffline();return}}catch(e){}await new Promise(r=>setTimeout(r,1500))}btn.disabled=false;}
-async function syncDonneesOffline(){const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});for(const m of mOff){try{const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');if(m.photoBase64){const blob=await (await fetch(m.photoBase64)).blob();fd.append('photo',blob,'photo.jpg')}const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});if(res.ok){db.transaction('membres_offline','readwrite').objectStore('membres_offline').delete(m.tempId);}}catch(e){}}updateBadge();if(mOff.length>0){chargerMembres()}}
-function openTab(n){if(n==='admins'&&userRole!=='super_admin'){alert('⛔');return}document.getElementById('membres').classList.toggle('hidden',n!='membres');document.getElementById('cotisations').classList.toggle('hidden',n!='cotisations');document.getElementById('terrain').classList.toggle('hidden',n!='terrain');document.getElementById('admins').classList.toggle('hidden',n!='admins')}
-
-// FIX AJOUT MEMBRE - NE BLOQUE PLUS
+async function reveillerServeur(){const btn=document.getElementById('btnReveil');const bar=document.getElementById('barReveil');const prog=document.getElementById('progressReveil');const log=document.getElementById('logReveil');bar.classList.remove('hidden');btn.disabled=true;for(let i=1;i<=20;i++){log.innerText=`Ping ${i}/20...`;prog.style.width=(i*5)+'%';try{const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});if(r.status!==502){log.innerText=`✅ Postgres réveillé!`;btn.innerText='✅ REVEILLÉ';setTimeout(()=>{btn.innerText='🔧 REVEILLER';btn.disabled=false;bar.classList.add('hidden');chargerMembres(true)},2000);return}}catch(e){}await new Promise(r=>setTimeout(r,1000))}btn.disabled=false;}
+function forcerRefreshPostgres(){document.getElementById('sourceData').innerText='Rechargement Postgres...';chargerMembres(true);}
+async function chargerMembres(forcePostgres=false){
+  const log=document.getElementById('logAjout');
+  if(navigator.onLine){
+    try{
+      log.innerText='🔄 Chargement depuis Postgres...';
+      const r=await fetch('/api/membres',{credentials:'include',cache:'no-store'});
+      if(r.ok){
+        const data=await r.json();
+        // SAUVE DANS CACHE STABLE
+        const tx=db.transaction('cache_membres','readwrite');const st=tx.objectStore('cache_membres');await st.clear();data.forEach(m=>st.put({...m, photoBase64:''}));
+        cacheMembres=data;
+        document.getElementById('sourceData').innerText=`Source: Postgres (${data.length})`;
+        log.innerText=`✅ ${data.length} membres chargés depuis Postgres (partagés)`;
+        afficherMembres(data); return;
+      }
+    }catch(e){ log.innerText=`⚠️ Postgres dort, affichage local`; }
+  }
+  // FALLBACK LOCAL SEULEMENT SI POSTGRES KO
+  const tx=db.transaction('cache_membres','readonly');const q=tx.objectStore('cache_membres').getAll();q.onsuccess=()=>{const local=q.result;const offline=local;document.getElementById('sourceData').innerText=`Source: LOCAL (${local.length})`;document.getElementById('logAjout').innerText=`⚠️ Mode local: ${local.length} membres. Clique REVEILLER puis RECHARGER POSTGRES`;afficherMembres(local);}
+}
+function afficherMembres(data){document.getElementById('listeMembres').innerHTML=data.map(m=>`<tr class="border-b"><td class="p-2">${m.photoBase64||m.photo?`<img src="${m.photoBase64||'/uploads/'+m.photo}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`:'👤'}</td><td class="p-2 font-bold">${m.nom}</td><td class="p-2">${m.telephone||''}</td><td class="p-2">${m.quartier||''}</td><td class="p-2 text-xs">${new Date(m.date_inscription||Date.now()).toLocaleDateString()}</td><td><button onclick="supprimerMembre(${m.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">🗑</button></td></tr>`).join('');document.getElementById('totalMembres').innerText=data.length;}
 document.getElementById('formMembre').addEventListener('submit',async e=>{
   e.preventDefault();
-  const btn=document.getElementById('btnAjout');
-  const log=document.getElementById('logAjout');
-  const nom=document.getElementById('nom').value.trim();
-  const telephone=document.getElementById('telephone').value;
-  const quartier=document.getElementById('quartier').value;
-  const file=document.getElementById('photo').files[0];
-  let photoBase64='';
-  if(file) photoBase64=await fileToBase64(file);
-  if(!nom){log.innerText='❌ Nom obligatoire';return}
-  btn.innerText='⏳ AJOUT EN COURS...'; btn.disabled=true; log.innerText='';
-
-  const newM={id:Date.now(),tempId:Date.now(),nom,telephone,quartier,photo:file?.name||'',photoBase64,date_inscription:new Date().toISOString()};
-
-  // 1. ON AFFICHE DIRECT EN LOCAL (instantané)
-  const tx=db.transaction('cache_membres','readwrite');
-  tx.objectStore('cache_membres').put(newM);
-  cacheMembres.push(newM);
-  afficherMembres(cacheMembres); chargerStats();
-  document.getElementById('nom').value=''; document.getElementById('telephone').value=''; document.getElementById('quartier').value=''; document.getElementById('photo').value='';
-
-  // 2. ON ESSAIE D'ENVOYER À POSTGRES (partagé)
-  try{
-    const fd=new FormData();
-    fd.append('nom',nom); fd.append('telephone',telephone); fd.append('quartier',quartier);
-    if(file) fd.append('photo',file);
-    const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});
-    const text=await res.text();
-    console.log('Réponse serveur:',res.status,text);
-    if(res.ok){
-      log.innerHTML='<span class="text-green-600">✅ Ajouté & Partagé sur Postgres!</span>';
-      await saveOffline('membres_offline',{...newM}); // pour backup puis on sync
-      await syncDonneesOffline();
-      setTimeout(()=>chargerMembres(),1000);
-    } else {
-      throw new Error(text);
-    }
-  }catch(err){
-    console.log('Erreur ajout:',err);
-    log.innerHTML=`⚠️ Sauvé en local (Postgres endormi). Clique REVEILLER puis FORCER SYNC. Erreur: ${err.message.slice(0,100)}`;
-    await saveOffline('membres_offline',newM);
-  }
-  btn.innerText='+ AJOUTER & PARTAGER'; btn.disabled=false; updateBadge();
+  const btn=document.getElementById('btnAjout');const orig=btn.innerHTML;btn.innerHTML='⏳...';btn.disabled=true;
+  const nom=document.getElementById('nom').value.trim();const tel=document.getElementById('telephone').value;const quartier=document.getElementById('quartier').value;const file=document.getElementById('photo').files[0];let b64='';if(file)b64=await fileToBase64(file);if(!nom){btn.innerHTML=orig;btn.disabled=false;return;}
+  // AJOUT INSTANTANÉ
+  const tempId=Date.now();const newM={id:tempId,tempId,nom,telephone:tel,quartier,photoBase64:b64,date_inscription:new Date().toISOString()};
+  const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').put(newM);afficherMembres([...cacheMembres,newM]);document.getElementById('totalMembres').innerText=cacheMembres.length+1;
+  e.target.reset();btn.innerHTML='✅ AJOUTÉ LOCAL';setTimeout(()=>{btn.innerHTML=orig;btn.disabled=false;},1000);
+  // ENVOI ARRIÈRE-PLAN SANS BLOQUER
+  const controller=new AbortController();setTimeout(()=>controller.abort(),5000);
+  try{const fd=new FormData();fd.append('nom',nom);fd.append('telephone',tel);fd.append('quartier',quartier);if(file)fd.append('photo',file);const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include',signal:controller.signal});if(res.ok){const saved=await res.json();console.log('Postgres OK',saved);const tx2=db.transaction('cache_membres','readwrite');tx2.objectStore('cache_membres').delete(tempId);tx2.objectStore('cache_membres').put({...saved,photoBase64:b64});chargerMembres(true);}else{throw 'fail';}}catch(err){console.log('Mis en attente locale',err);await saveOffline('membres_offline',newM);}
+  updateBadge();
 });
-
-async function chargerMembres(s=''){try{const r=await fetch(`/api/membres?search=${encodeURIComponent(s||'')}`,{credentials:'include'});if(r.ok){const d=await r.json();console.log('Membres Postgres:',d.length);if(!s){cacheMembres=d;const tx=db.transaction('cache_membres','readwrite');const st=tx.objectStore('cache_membres');await st.clear();d.forEach(m=>st.put(m));afficherMembres(d);chargerStats();if(d.length===0)document.getElementById('logAjout').innerText='ℹ️ Postgres vide (0 membre) - Ajoute ton premier membre ci-dessus';return}afficherMembres(d);return}}catch(e){console.log('Fetch membres échoué',e)}const tx=db.transaction('cache_membres','readonly');const q=tx.objectStore('cache_membres').getAll();q.onsuccess=()=>{let data=q.result;if(s)data=data.filter(m=>m.nom.toLowerCase().includes(s.toLowerCase()));afficherMembres(data);chargerStats();}}
-function afficherMembres(data){document.getElementById('listeMembres').innerHTML=data.map(m=>{const src=m.photoBase64|| (m.photo?`/uploads/${m.photo}`:'');return `<tr class="border-b"><td class="p-2">${src?`<img src="${src}" class="photo-rond">`:'👤'}</td><td class="p-2 font-bold">${m.nom}</td><td class="p-2">${m.telephone||''}</td><td class="p-2">${m.quartier||''}</td><td class="p-2 text-xs">${new Date(m.date_inscription||Date.now()).toLocaleDateString()}</td><td class="p-2"><button onclick="supprimerMembre(${m.id})" class="bg-red-500 text-white px-2 py-1 rounded-full text-xs">🗑</button></td></tr>`}).join('')||`<tr><td colspan=6 class="p-8 text-center text-gray-400">Aucun membre - ajoute ci-dessus</td></tr>`;document.getElementById('totalMembres').innerText=data.length;document.getElementById('totalQuartiers').innerText=[...new Set(data.map(m=>m.quartier).filter(Boolean))].length;document.getElementById('membre_id').innerHTML='<option value="">-- Choisir --</option>'+data.map(m=>`<option value="${m.id}">${m.nom}</option>`).join('')}
-async function chargerCotisations(){try{const r=await fetch('/api/cotisations',{credentials:'include'});if(r.ok){const d=await r.json();cacheCotis=d;document.getElementById('totalCotisations').innerText=d.reduce((a,b)=>a+(b.montant||0),0).toLocaleString()+' FCFA';return}}catch(e){}}
-async function supprimerMembre(id){if(!confirm('Supprimer?'))return;const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').delete(id);cacheMembres=cacheMembres.filter(m=>m.id!=id);afficherMembres(cacheMembres);try{await fetch(`/api/membres/${id}`,{method:'DELETE',credentials:'include'})}catch(e){}}
-function exportPDF(){window.location.href='/api/export/pdf-dashboard'}function exportMembres(){window.location.href='/api/export/membres'}function exportCotisations(){window.location.href='/api/export/cotisations'}async function importExcel(input){const file=input.files[0];if(!file)return;const fd=new FormData();fd.append('file',file);try{const r=await fetch('/api/import/membres',{method:'POST',body:fd,credentials:'include'});alert('✅ Import OK');chargerMembres()}catch(e){alert('❌ Erreur import')}input.value='';}
-async function ajouterCotisation(){const mid=document.getElementById('membre_id').value;const mont=document.getElementById('montant').value;if(!mid||!mont)return;await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:parseInt(mid),montant:parseInt(mont)}),credentials:'include'});chargerMembres()}
-(async()=>{await initDB();await checkAuth();await chargerMembres();await chargerCotisations();setInterval(updateBadge,2000)})();
+async function syncDonneesOffline(){const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});for(const m of mOff){try{const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');if(m.photoBase64){const blob=await (await fetch(m.photoBase64)).blob();fd.append('photo',blob,'photo.jpg')}const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});if(res.ok){db.transaction('membres_offline','readwrite').objectStore('membres_offline').delete(m.tempId);}}catch(e){}}chargerMembres(true);updateBadge();}
+async function supprimerMembre(id){if(!confirm('Supprimer pour TOUS?'))return;try{await fetch(`/api/membres/${id}`,{method:'DELETE',credentials:'include'})}catch(e){}const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').delete(id);chargerMembres();}
+function exportPDF(){window.location.href='/api/export/pdf-dashboard'}function exportMembres(){window.location.href='/api/export/membres'}function exportCotisations(){window.location.href='/api/export/cotisations'}async function importExcel(i){const f=i.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);await fetch('/api/import/membres',{method:'POST',body:fd,credentials:'include'});chargerMembres(true)}
+(async()=>{await initDB();await chargerMembres(true);updateBadge();})();
 </script>
 </body>
 </html>

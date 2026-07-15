@@ -1,58 +1,399 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>V17.0 STABLE SHARED</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.tailwindcss.com"></script><style>.photo-rond{width:44px;height:44px;border-radius:50%;object-fit:cover}</style></head>
-<body class="bg-[#f1f5f9]">
-<div class="bg-[#002244] text-white p-4 sticky top-0 z-50"><div class="flex justify-between"><h1 class="font-black">🇨🇮 V17.0 STABLE - NE CHANGE PLUS</h1><div class="flex gap-2"><span id="statusReseau" class="bg-green-500 px-2 py-1 rounded-full text-xs">🟢</span><span id="badgeAttente"></span><button onclick="reveillerServeur()" id="btnReveil" class="bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-black">🔧 REVEILLER</button><button onclick="forcerRefreshPostgres()" class="bg-white text-black px-3 py-1 rounded-full text-xs font-bold">🔄 RECHARGER POSTGRES</button></div></div><div class="mt-3 grid grid-cols-4 gap-3 text-center"><div class="bg-white/10 p-3 rounded-xl"><p class="text-">TOTAL MEMBRES</p><p id="totalMembres" class="text-xl font-black">0</p><p id="sourceData" class="text- opacity-60">Source: Postgres</p></div><div class="bg-white/10 p-3 rounded-xl"><p class="text-">COTISATIONS</p><p id="totalCotisations" class="text-xl font-black">0</p></div><div class="bg-white/10 p-3 rounded-xl"><p class="text-">QUARTIERS</p><p id="totalQuartiers" class="text-xl font-black">0</p></div><div id="cardAttentePro" class="bg-green-500 p-3 rounded-xl"><p id="textAttentePro" class="text-sm font-black">✅</p><p id="subText" class="text-"></p></div></div><div class="mt-3 grid grid-cols-4 gap-2"><button onclick="exportPDF()" class="bg-red-600 text-white py-2 rounded-xl text-xs font-black">📄 PDF</button><button onclick="exportMembres()" class="bg-green-600 text-white py-2 rounded-xl text-xs font-black">📊 Excel Membres</button><label class="bg-blue-600 text-white py-2 rounded-xl text-xs font-black text-center">📥 Import<input type="file" class="hidden" onchange="importExcel(this)"></label><button onclick="exportCotisations()" class="bg-yellow-400 text-black py-2 rounded-xl text-xs font-black">💰 Excel Cotis</button></div><div id="barReveil" class="hidden mt-2"><div class="w-full bg-black/30 h-2 rounded-full"><div id="progressReveil" class="bg-yellow-400 h-2 rounded-full" style="width:0%"></div></div><p id="logReveil" class="text-xs"></p></div></div>
-<div class="max-w- mx-auto p-4 space-y-4">
-<div id="membres" class="bg-white p-4 rounded-2xl"><form id="formMembre" class="flex gap-2 flex-wrap mb-4 bg-yellow-50 p-3 rounded-xl border-2 border-yellow-400"><input id="nom" placeholder="Nom *" required class="p-3 border-2 rounded-xl flex-1 font-bold"><input id="telephone" placeholder="WhatsApp" class="p-2 border rounded"><input id="quartier" placeholder="Quartier" class="p-2 border rounded"><input type="file" id="photo" accept="image/*" class="p-2 border rounded bg-white text-xs"><button type="submit" id="btnAjout" class="bg-[#002244] text-white px-6 py-3 rounded-xl font-black">+ AJOUTER</button></form><div id="logAjout" class="text-xs mb-2"></div><table class="w-full text-sm"><thead><tr class="bg-[#002244] text-white"><th class="p-3">Photo</th><th>Nom</th><th>Tél</th><th>Quartier</th><th>Date</th><th>Actions</th></tr></thead><tbody id="listeMembres"></tbody></table></div>
-<div id="zoneAttente" class="hidden bg-red-50 border-2 border-dashed border-red-400 rounded-xl p-3"><h3 class="font-bold text-red-700">⏳ EN ATTENTE LOCALE: <span id="countDetail">0</span> <button onclick="syncDonneesOffline()" class="ml-2 bg-red-600 text-white px-3 py-1 rounded-full text-xs">FORCER SYNC</button></h3><p class="text-">Ces membres sont dans ton téléphone, pas encore sur Postgres. Ils ne sont pas visibles par les autres.</p><div id="listeAttente" class="text-xs mt-2"></div></div>
-</div>
+<head>
+  <meta charset="UTF-8">
+  <title>ESPOIR CITOYEN V15.1</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#003366">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ESPOIR CITOYEN">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial; max-width: 1400px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
+    h1 { color: #003366; text-align: center; }
+    .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .app { display: none; }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .user-info { font-size: 14px; color: #666; }
+    .offline-badge { background: #EF4444; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+    .online-badge { background: #059669; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+    .stat-box { background: #003366; color: white; padding: 20px; border-radius: 8px; text-align: center; }
+    .stat-box h3 { margin: 0; font-size: 14px; opacity: 0.8; }
+    .stat-box p { margin: 10px 0 0; font-size: 28px; font-weight: bold; }
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+    .chart-container { background: white; padding: 20px; border-radius: 8px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #003366; flex-wrap: wrap; }
+    .tab { padding: 10px 20px; cursor: pointer; background: #eee; border: none; font-size: 16px; }
+    .tab.active { background: #003366; color: white; }
+    .content { display: none; background: white; padding: 20px; border-radius: 8px; }
+    .content.active { display: block; }
+    input, select, button { padding: 10px; margin: 5px; font-size: 16px; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #003366; color: white; border: none; cursor: pointer; }
+    .btn-export { background: #059669; }
+    .btn-edit { background: #F59E0B; }
+    .btn-delete { background: #EF4444; }
+    .btn-logout { background: #6B7280; }
+    .btn-whatsapp { background: #25D366; }
+    .btn-print { background: #0EA5E9; }
+    .btn-pdf { background: #DC2626; }
+    .btn-carte { background: #7C3AED; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    td, th { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #003366; color: white; }
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
+    .actions { display: flex; gap: 5px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
+    .modal-content { background: white; margin: 3% auto; padding: 20px; width: 600px; border-radius: 8px; max-height: 90vh; overflow-y: auto; }
+    .search-box { width: 300px; }
+    .photo-membre { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .photo-preview { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 10px 0; }
+    .carte-membre { width: 340px; height: 214px; border: 3px solid #003366; border-radius: 12px; padding: 15px; background: white; position: relative; }
+    .carte-logo { width: 60px; position: absolute; top: 10px; left: 10px; }
+    .carte-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; position: absolute; top: 15px; right: 15px; border: 2px solid #003366; }
+    .carte-qr { width: 70px; position: absolute; bottom: 10px; right: 10px; }
+    .carte-info { margin-top: 50px; font-size: 13px; }
+    .carte-info h3 { margin: 5px 0; color: #003366; font-size: 16px; }
+    .role-badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; }
+    .role-super_admin { background: #DC2626; }
+    .role-tresorier { background: #059669; }
+    .role-secretaire { background: #0EA5E9; }
+    @media print {
+      .no-print, .tabs, .form-row, .stats, .charts, .header, .actions { display: none!important; }
+      body { background: white; }
+      .content { display: block!important; }
+      h1 { color: black; }
+      th { background: #ccc!important; color: black!important; }
+      .carte-membre { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginBox" class="login-box">
+    <h2>🇨🇮 ESPOIR CITOYEN V15.1</h2>
+    <p>Connexion Administrateur</p>
+    <input type="email" id="email" placeholder="Email" style="width: 95%; margin-bottom: 10px;">
+    <input type="password" id="password" placeholder="Mot de passe" style="width: 95%;">
+    <button onclick="login()" style="width: 100%; margin-top: 10px;">Se connecter</button>
+    <p id="loginError" style="color: red; display: none;">Email ou mot de passe incorrect</p>
+  </div>
+  <div id="app" class="app">
+    <div class="header no-print">
+      <div>
+        <h1>🇨🇮 ESPOIR CITOYEN V15.1 <span id="statusReseau"></span></h1>
+        <div class="user-info" id="userInfo"></div>
+      </div>
+      <div>
+        <button class="btn-pdf" onclick="telechargerPDF()">📄 Tableau de Bord PDF</button>
+        <button class="btn-logout" onclick="logout()">Déconnexion</button>
+      </div>
+    <div class="stats no-print">
+      <div class="stat-box"><h3>TOTAL MEMBRES</h3><p id="totalMembres">0</p></div>
+      <div class="stat-box"><h3>TOTAL COTISATIONS</h3><p id="totalCotisations">0 FCFA</p></div>
+      <div class="stat-box"><h3>QUARTIERS ACTIFS</h3><p id="totalQuartiers">0</p></div>
+      <div class="stat-box"><h3>CE MOIS-CI</h3><p id="totalMois">0 FCFA</p></div>
+    </div>
+    <div class="charts no-print">
+      <div class="chart-container"><h3>Répartition par quartier</h3><canvas id="chartQuartier"></canvas></div>
+      <div class="chart-container"><h3>Cotisations par mois</h3><canvas id="chartMois"></canvas></div>
+    </div>
+    <div class="tabs no-print">
+      <button class="tab active" onclick="openTab('membres')">Membres</button>
+      <button class="tab" onclick="openTab('cotisations')">Cotisations</button>
+      <button class="tab" id="tabAdmins" onclick="openTab('admins')" style="display:none;">Admins</button>
+    </div>
+    <div id="membres" class="content active">
+      <h2 class="no-print">Gestion des membres</h2>
+      <form id="formMembre" class="form-row no-print" enctype="multipart/form-data">
+        <input id="nom" name="nom" placeholder="Nom complet" required>
+        <input id="telephone" name="telephone" placeholder="Téléphone WhatsApp">
+        <input id="quartier" name="quartier" placeholder="Quartier">
+        <input type="file" id="photo" name="photo" accept="image/*">
+        <button type="submit">Ajouter</button>
+      </form>
+      <div class="form-row no-print">
+        <input id="search" class="search-box" placeholder="🔍 Rechercher..." onkeyup="rechercherMembres()">
+        <button class="btn-export" onclick="exporterMembres()">📊 Export Excel</button>
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer</button>
+      </div>
+      <table><thead><tr><th>Photo</th><th>Nom</th><th>Téléphone</th><th>Quartier</th><th>Date</th><th class="no-print">Actions</th></tr></thead><tbody id="listeMembres"></tbody></table>
+    </div>
+    <div id="cotisations" class="content">
+      <h2 class="no-print">Gestion des cotisations</h2>
+      <div class="form-row no-print">
+        <select id="membre_id"><option value="">Choisir un membre</option></select>
+        <input id="montant" type="number" placeholder="Montant FCFA">
+        <button onclick="ajouterCotisation()">Enregistrer</button>
+        <button class="btn-export" onclick="exporterCotisations()">📊 Export Excel</button>
+        <button class="btn-print" onclick="window.print()">🖨 Imprimer</button>
+      </div>
+      <table><thead><tr><th>Membre</th><th>Quartier</th><th>Montant</th><th>Date</th><th class="no-print">Actions</th></tr></thead><tbody id="listeCotisations"></tbody></table>
+    </div>
+    <div id="admins" class="content">
+      <h2 class="no-print">Gestion des administrateurs</h2>
+      <div class="form-row no-print">
+        <input id="admin_nom" placeholder="Nom">
+        <input id="admin_email" type="email" placeholder="Email">
+        <input id="admin_password" type="password" placeholder="Mot de passe">
+        <select id="admin_role"><option value="secretaire">Secrétaire</option><option value="tresorier">Trésorier</option><option value="super_admin">Super Admin</option></select>
+        <button onclick="ajouterAdmin()">Ajouter Admin</button>
+      </div>
+      <table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Date création</th><th class="no-print">Actions</th></tr></thead><tbody id="listeAdmins"></tbody></table>
+    </div>
+  </div>
+  <div id="modalEdit" class="modal"><div class="modal-content">
+    <h3>Modifier le membre</h3>
+    <form id="formEditMembre" enctype="multipart/form-data">
+      <input type="hidden" id="edit_id" name="id"><input type="hidden" id="photo_existante" name="photo_existante">
+      <img id="previewPhoto" class="photo-preview" src="" style="display:none;">
+      <input id="edit_nom" name="nom" placeholder="Nom complet" style="width:95%" required><br>
+      <input id="edit_telephone" name="telephone" placeholder="Téléphone" style="width:95%"><br>
+      <input id="edit_quartier" name="quartier" placeholder="Quartier" style="width:95%"><br>
+      <input type="file" id="edit_photo" name="photo" accept="image/*" style="width:95%"><br><br>
+      <button type="submit">Enregistrer</button>
+      <button type="button" onclick="fermerModal('modalEdit')" style="background:#6B7280">Annuler</button>
+    </form>
+  </div></div>
+  <div id="modalCarte" class="modal"><div class="modal-content" style="width:400px">
+    <h3 class="no-print">Carte de Membre</h3><div id="carteMembre" class="carte-membre"></div>
+    <div class="no-print" style="margin-top:15px;text-align:center"><button class="btn-print" onclick="window.print()">🖨 Imprimer</button><button onclick="fermerModal('modalCarte')" style="background:#6B7280">Fermer</button></div>
+  </div></div>
 <script>
-let db, cacheMembres=[];
-const initDB=()=>new Promise(res=>{const r=indexedDB.open('ESPOIR-CITOYEN-FINAL-STABLE',2);r.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('membres_offline'))db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});if(!db.objectStoreNames.contains('cache_membres'))db.createObjectStore('cache_membres',{keyPath:'id'})};r.onsuccess=e=>{db=e.target.result;res(db)}});
-function fileToBase64(f){return new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.readAsDataURL(f)})}
-async function updateBadge(){if(!db)return;const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});document.getElementById('badgeAttente').innerHTML=mOff.length>0?`<span class="bg-red-600 text-white px-2 py-1 rounded-full text-xs font-black">🔴 ${mOff.length} LOCAL</span>`:`<span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs">✅ POSTGRES</span>`;document.getElementById('countDetail').innerText=mOff.length;document.getElementById('zoneAttente').classList.toggle('hidden',mOff.length==0);document.getElementById('listeAttente').innerHTML=mOff.map(m=>`<div>👤 ${m.nom}</div>`).join('')}
-async function saveOffline(s,d){const tx=db.transaction(s,'readwrite');await tx.objectStore(s).add({...d,timestamp:Date.now()});updateBadge()}
-async function reveillerServeur(){const btn=document.getElementById('btnReveil');const bar=document.getElementById('barReveil');const prog=document.getElementById('progressReveil');const log=document.getElementById('logReveil');bar.classList.remove('hidden');btn.disabled=true;for(let i=1;i<=20;i++){log.innerText=`Ping ${i}/20...`;prog.style.width=(i*5)+'%';try{const r=await fetch('/api/check-auth',{credentials:'include',cache:'no-store'});if(r.status!==502){log.innerText=`✅ Postgres réveillé!`;btn.innerText='✅ REVEILLÉ';setTimeout(()=>{btn.innerText='🔧 REVEILLER';btn.disabled=false;bar.classList.add('hidden');chargerMembres(true)},2000);return}}catch(e){}await new Promise(r=>setTimeout(r,1000))}btn.disabled=false;}
-function forcerRefreshPostgres(){document.getElementById('sourceData').innerText='Rechargement Postgres...';chargerMembres(true);}
-async function chargerMembres(forcePostgres=false){
-  const log=document.getElementById('logAjout');
-  if(navigator.onLine){
-    try{
-      log.innerText='🔄 Chargement depuis Postgres...';
-      const r=await fetch('/api/membres',{credentials:'include',cache:'no-store'});
-      if(r.ok){
-        const data=await r.json();
-        // SAUVE DANS CACHE STABLE
-        const tx=db.transaction('cache_membres','readwrite');const st=tx.objectStore('cache_membres');await st.clear();data.forEach(m=>st.put({...m, photoBase64:''}));
-        cacheMembres=data;
-        document.getElementById('sourceData').innerText=`Source: Postgres (${data.length})`;
-        log.innerText=`✅ ${data.length} membres chargés depuis Postgres (partagés)`;
-        afficherMembres(data); return;
-      }
-    }catch(e){ log.innerText=`⚠️ Postgres dort, affichage local`; }
-  }
-  // FALLBACK LOCAL SEULEMENT SI POSTGRES KO
-  const tx=db.transaction('cache_membres','readonly');const q=tx.objectStore('cache_membres').getAll();q.onsuccess=()=>{const local=q.result;const offline=local;document.getElementById('sourceData').innerText=`Source: LOCAL (${local.length})`;document.getElementById('logAjout').innerText=`⚠️ Mode local: ${local.length} membres. Clique REVEILLER puis RECHARGER POSTGRES`;afficherMembres(local);}
-}
-function afficherMembres(data){document.getElementById('listeMembres').innerHTML=data.map(m=>`<tr class="border-b"><td class="p-2">${m.photoBase64||m.photo?`<img src="${m.photoBase64||'/uploads/'+m.photo}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`:'👤'}</td><td class="p-2 font-bold">${m.nom}</td><td class="p-2">${m.telephone||''}</td><td class="p-2">${m.quartier||''}</td><td class="p-2 text-xs">${new Date(m.date_inscription||Date.now()).toLocaleDateString()}</td><td><button onclick="supprimerMembre(${m.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">🗑</button></td></tr>`).join('');document.getElementById('totalMembres').innerText=data.length;}
-document.getElementById('formMembre').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const btn=document.getElementById('btnAjout');const orig=btn.innerHTML;btn.innerHTML='⏳...';btn.disabled=true;
-  const nom=document.getElementById('nom').value.trim();const tel=document.getElementById('telephone').value;const quartier=document.getElementById('quartier').value;const file=document.getElementById('photo').files[0];let b64='';if(file)b64=await fileToBase64(file);if(!nom){btn.innerHTML=orig;btn.disabled=false;return;}
-  // AJOUT INSTANTANÉ
-  const tempId=Date.now();const newM={id:tempId,tempId,nom,telephone:tel,quartier,photoBase64:b64,date_inscription:new Date().toISOString()};
-  const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').put(newM);afficherMembres([...cacheMembres,newM]);document.getElementById('totalMembres').innerText=cacheMembres.length+1;
-  e.target.reset();btn.innerHTML='✅ AJOUTÉ LOCAL';setTimeout(()=>{btn.innerHTML=orig;btn.disabled=false;},1000);
-  // ENVOI ARRIÈRE-PLAN SANS BLOQUER
-  const controller=new AbortController();setTimeout(()=>controller.abort(),5000);
-  try{const fd=new FormData();fd.append('nom',nom);fd.append('telephone',tel);fd.append('quartier',quartier);if(file)fd.append('photo',file);const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include',signal:controller.signal});if(res.ok){const saved=await res.json();console.log('Postgres OK',saved);const tx2=db.transaction('cache_membres','readwrite');tx2.objectStore('cache_membres').delete(tempId);tx2.objectStore('cache_membres').put({...saved,photoBase64:b64});chargerMembres(true);}else{throw 'fail';}}catch(err){console.log('Mis en attente locale',err);await saveOffline('membres_offline',newM);}
-  updateBadge();
+let chartQuartier=null, chartMois=null, userRole='', db;
+const initDB=()=>new Promise((resolve,reject)=>{
+  const request=indexedDB.open('espoir-citoyen-offline',2);
+  request.onupgradeneeded=e=>{
+    db=e.target.result;
+    if(!db.objectStoreNames.contains('membres_offline')) db.createObjectStore('membres_offline',{keyPath:'tempId',autoIncrement:true});
+    if(!db.objectStoreNames.contains('cotisations_offline')) db.createObjectStore('cotisations_offline',{keyPath:'tempId',autoIncrement:true});
+    if(!db.objectStoreNames.contains('cache_membres')) db.createObjectStore('cache_membres',{keyPath:'id'});
+    if(!db.objectStoreNames.contains('cache_cotisations')) db.createObjectStore('cache_cotisations',{keyPath:'id'});
+  };
+  request.onsuccess=e=>{db=e.target.result;resolve(db);};
+  request.onerror=e=>reject(e);
 });
-async function syncDonneesOffline(){const mOff=await new Promise(r=>{const q=db.transaction('membres_offline','readonly').objectStore('membres_offline').getAll();q.onsuccess=()=>r(q.result)});for(const m of mOff){try{const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');if(m.photoBase64){const blob=await (await fetch(m.photoBase64)).blob();fd.append('photo',blob,'photo.jpg')}const res=await fetch('/api/membres',{method:'POST',body:fd,credentials:'include'});if(res.ok){db.transaction('membres_offline','readwrite').objectStore('membres_offline').delete(m.tempId);}}catch(e){}}chargerMembres(true);updateBadge();}
-async function supprimerMembre(id){if(!confirm('Supprimer pour TOUS?'))return;try{await fetch(`/api/membres/${id}`,{method:'DELETE',credentials:'include'})}catch(e){}const tx=db.transaction('cache_membres','readwrite');tx.objectStore('cache_membres').delete(id);chargerMembres();}
-function exportPDF(){window.location.href='/api/export/pdf-dashboard'}function exportMembres(){window.location.href='/api/export/membres'}function exportCotisations(){window.location.href='/api/export/cotisations'}async function importExcel(i){const f=i.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);await fetch('/api/import/membres',{method:'POST',body:fd,credentials:'include'});chargerMembres(true)}
-(async()=>{await initDB();await chargerMembres(true);updateBadge();})();
+function isOnline(){return navigator.onLine;}
+function updateStatusReseau(){
+  const badge=document.getElementById('statusReseau');
+  if(isOnline()) badge.innerHTML='<span class="online-badge">🟢 En ligne</span>';
+  else badge.innerHTML='<span class="offline-badge">🔴 Hors ligne</span>';
+}
+window.addEventListener('online',()=>{updateStatusReseau();syncDonneesOffline();});
+window.addEventListener('offline',updateStatusReseau);
+async function saveOffline(storeName,data){
+  const tx=db.transaction(storeName,'readwrite');
+  await tx.objectStore(storeName).add({...data,synced:false,timestamp:Date.now()});
+}
+async function syncDonneesOffline(){
+  if(!isOnline()||!db) return;
+  const txM=db.transaction('membres_offline','readonly');
+  const membresOffline=await new Promise(r=>{const req=txM.objectStore('membres_offline').getAll();req.onsuccess=()=>r(req.result);});
+  for(const m of membresOffline){
+    try{
+      const fd=new FormData();fd.append('nom',m.nom);fd.append('telephone',m.telephone||'');fd.append('quartier',m.quartier||'');
+      await fetch('/api/membres',{method:'POST',body:fd});
+      const txDel=db.transaction('membres_offline','readwrite');txDel.objectStore('membres_offline').delete(m.tempId);
+    }catch(err){console.error(err);}
+  }
+  const txC=db.transaction('cotisations_offline','readonly');
+  const cotOffline=await new Promise(r=>{const req=txC.objectStore('cotisations_offline').getAll();req.onsuccess=()=>r(req.result);});
+  for(const c of cotOffline){
+    try{
+      await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({membre_id:c.membre_id,montant:c.montant})});
+      const txDel=db.transaction('cotisations_offline','readwrite');txDel.objectStore('cotisations_offline').delete(c.tempId);
+    }catch(err){console.error(err);}
+  }
+  if(membresOffline.length>0||cotOffline.length>0){alert('✅ Données synchronisées !');chargerMembres();chargerCotisations();}
+}
+async function checkAuth(){
+  try{
+    const res=await fetch('/api/check-auth');const data=await res.json();
+    if(data.loggedIn){
+      userRole=data.role;
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('app').style.display='block';
+      document.getElementById('userInfo').innerHTML=`Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
+      if(data.role==='super_admin') document.getElementById('tabAdmins').style.display='block';
+      updateStatusReseau();init();
+    }
+  }catch(e){console.log('Auth check offline');}
+}
+async function login(){
+  const email=document.getElementById('email').value;
+  const password=document.getElementById('password').value;
+  const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+  if(res.ok){
+    const data=await res.json();
+    userRole=data.role;
+    document.getElementById('loginBox').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('userInfo').innerHTML=`Connecté : ${data.nom} <span class="role-badge role-${data.role}">${data.role}</span>`;
+    if(data.role==='super_admin') document.getElementById('tabAdmins').style.display='block';
+    updateStatusReseau();init();
+  }else{document.getElementById('loginError').style.display='block';}
+}
+async function logout(){await fetch('/api/logout',{method:'POST'});location.reload();}
+function openTab(tabName){
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabName).classList.add('active');
+  if(event&&event.target) event.target.classList.add('active');
+  if(tabName==='cotisations') chargerCotisations();
+  if(tabName==='admins') chargerAdmins();
+}
+async function init(){await initDB();await chargerStats();await chargerMembres();}
+async function chargerStats(){
+  if(!isOnline()) return;
+  try{
+    const res=await fetch('/api/stats');const data=await res.json();
+    document.getElementById('totalMembres').textContent=data.total_membres;
+    document.getElementById('totalCotisations').textContent=data.total_cotisations.toLocaleString()+' FCFA';
+    document.getElementById('totalQuartiers').textContent=data.graphique_quartier.length;
+    const moisActuel=new Date().toISOString().slice(0,7);
+    const totalMois=data.graphique_mois.find(m=>m.mois===moisActuel);
+    document.getElementById('totalMois').textContent=totalMois?totalMois.total.toLocaleString()+' FCFA':'0 FCFA';
+    const ctx1=document.getElementById('chartQuartier');
+    if(chartQuartier) chartQuartier.destroy();
+    chartQuartier=new Chart(ctx1,{type:'pie',data:{labels:data.graphique_quartier.map(q=>q.quartier),datasets:[{data:data.graphique_quartier.map(q=>q.total),backgroundColor:['#003366','#059669','#F59E0B','#EF4444','#8B5CF6','#EC4899','#10B981','#3B82F6']}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+    const ctx2=document.getElementById('chartMois');
+    if(chartMois) chartMois.destroy();
+    chartMois=new Chart(ctx2,{type:'bar',data:{labels:data.graphique_mois.map(m=>m.mois),datasets:[{label:'Cotisations FCFA',data:data.graphique_mois.map(m=>m.total),backgroundColor:'#003366'}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
+  }catch(err){console.log('Mode hors ligne - stats non chargées');}
+}
+async function chargerMembres(search=''){
+  if(!isOnline()){
+    const tx=db.transaction('cache_membres','readonly');
+    const req=tx.objectStore('cache_membres').getAll();
+    req.onsuccess=()=>afficherMembres(req.result);
+    return;
+  }
+  try{
+    const res=await fetch(`/api/membres?search=${encodeURIComponent(search)}`);const data=await res.json();
+    const tx=db.transaction('cache_membres','readwrite');const store=tx.objectStore('cache_membres');await store.clear();data.forEach(m=>store.put(m));
+    afficherMembres(data);chargerSelectMembres();chargerStats();
+  }catch(err){console.log('Erreur chargement membres');}
+}
+function afficherMembres(data){
+  document.getElementById('listeMembres').innerHTML=data.map(m=>`
+    <tr>
+      <td>${m.photo?`<img src="/uploads/${m.photo}" class="photo-membre">`:'👤'}</td>
+      <td>${m.nom}</td><td>${m.telephone||''}</td><td>${m.quartier||''}</td>
+      <td>${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</td>
+      <td class="actions no-print">
+        <button class="btn-carte" onclick="voirCarte(${m.id})">💳</button>
+        <button class="btn-whatsapp" onclick="ouvrirWhatsApp('${m.telephone}','${m.nom}')">💚</button>
+        ${userRole!=='tresorier'?`<button class="btn-edit" onclick='ouvrirModalEdit(${JSON.stringify(m).replace(/'/g,"&apos;")})'>✏</button>`:''}
+        ${userRole==='super_admin'?`<button class="btn-delete" onclick="supprimerMembre(${m.id})">🗑</button>`:''}
+      </td>
+    </tr>`).join('');
+}
+async function voirCarte(id){
+  if(!isOnline()){alert('Mode hors ligne : cartes non disponibles');return;}
+  const res=await fetch(`/api/membre/${id}/carte`);const data=await res.json();const m=data.membre;
+  document.getElementById('carteMembre').innerHTML=`<img src="/logo.png" class="carte-logo" onerror="this.style.display='none'">${m.photo?`<img src="/uploads/${m.photo}" class="carte-photo">`:''}<div class="carte-info"><h3>ONG ESPOIR CITOYEN</h3><p><strong>ID:</strong> ${m.id}</p><p><strong>Nom:</strong> ${m.nom}</p><p><strong>Tél:</strong> ${m.telephone}</p><p><strong>Quartier:</strong> ${m.quartier}</p><p style="font-size:11px;margin-top:10px"><strong>Membre depuis:</strong> ${new Date(m.date_inscription).toLocaleDateString('fr-FR')}</p></div><img src="${data.qrcode}" class="carte-qr">`;
+  document.getElementById('modalCarte').style.display='block';
+}
+function ouvrirWhatsApp(tel,nom){
+  if(!tel) return alert('Pas de numéro WhatsApp');
+  const numero=tel.replace(/\s/g,'').replace('+','');const message=encodeURIComponent(`Bonjour ${nom}, message de ESPOIR CITOYEN 🇨🇮`);
+  window.open(`https://wa.me/${numero}?text=${message}`,'_blank');
+}
+function rechercherMembres(){const search=document.getElementById('search').value;chargerMembres(search);}
+document.getElementById('formMembre').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const formData=new FormData(e.target);const data=Object.fromEntries(formData.entries());
+  if(isOnline()){await fetch('/api/membres',{method:'POST',body:formData});alert('Membre ajouté ✅');}
+  else{await saveOffline('membres_offline',data);alert('📴 Mode hors ligne : Membre sauvegardé\nSera envoyé quand internet reviendra');if('serviceWorker' in navigator){navigator.serviceWorker.ready.then(reg=>reg.sync.register('sync-donnees'));}}
+  e.target.reset();chargerMembres();
+});
+function ouvrirModalEdit(membre){
+  document.getElementById('edit_id').value=membre.id;document.getElementById('edit_nom').value=membre.nom;document.getElementById('edit_telephone').value=membre.telephone;document.getElementById('edit_quartier').value=membre.quartier;document.getElementById('photo_existante').value=membre.photo||'';
+  const preview=document.getElementById('previewPhoto');
+  if(membre.photo){preview.src=`/uploads/${membre.photo}`;preview.style.display='block';}else{preview.style.display='none';}
+  document.getElementById('modalEdit').style.display='block';
+}
+function fermerModal(id){document.getElementById(id).style.display='none';}
+document.getElementById('formEditMembre').addEventListener('submit',async(e)=>{
+  e.preventDefault();const id=document.getElementById('edit_id').value;const formData=new FormData(e.target);
+  await fetch(`/api/membres/${id}`,{method:'PUT',body:formData});fermerModal('modalEdit');chargerMembres();
+});
+async function supprimerMembre(id){if(confirm('Supprimer ce membre?')){await fetch(`/api/membres/${id}`,{method:'DELETE'});chargerMembres();}}
+function exporterMembres(){window.location.href='/api/export/membres';}
+async function chargerSelectMembres(){
+  if(!isOnline()) return;
+  const res=await fetch('/api/membres');const data=await res.json();
+  document.getElementById('membre_id').innerHTML='<option value="">Choisir un membre</option>'+data.map(m=>`<option value="${m.id}">${m.nom}</option>`).join('');
+}
+async function chargerCotisations(){
+  if(!isOnline()){
+    const tx=db.transaction('cache_cotisations','readonly');
+    const req=tx.objectStore('cache_cotisations').getAll();
+    req.onsuccess=()=>afficherCotisations(req.result);
+    return;
+  }
+  try{
+    const res=await fetch('/api/cotisations');const data=await res.json();
+    const tx=db.transaction('cache_cotisations','readwrite');const store=tx.objectStore('cache_cotisations');await store.clear();data.forEach(c=>store.put(c));
+    afficherCotisations(data);chargerStats();
+  }catch(err){console.log('Erreur chargement cotisations');}
+}
+function afficherCotisations(data){
+  document.getElementById('listeCotisations').innerHTML=data.map(c=>`
+    <tr><td>${c.nom}</td><td>${c.quartier}</td><td>${c.montant.toLocaleString()} FCFA</td><td>${new Date(c.date_cotisation).toLocaleDateString('fr-FR')}</td>
+    <td class="no-print"><button class="btn-whatsapp" onclick="envoyerRecuWhatsApp('${c.telephone}','${c.nom}',${c.montant})">💚 Recu</button>${userRole!=='secretaire'?`<button class="btn-delete" onclick="supprimerCotisation(${c.id})">🗑</button>`:''}</td></tr>`).join('');
+}
+function envoyerRecuWhatsApp(tel,nom,montant){
+  if(!tel) return alert('Pas de numéro');
+  const numero=tel.replace(/\s/g,'').replace('+','');const message=encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${nom},\nNous confirmons la réception de votre cotisation de ${montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+  window.open(`https://wa.me/${numero}?text=${message}`,'_blank');
+}
+async function ajouterCotisation(){
+  const membre_id=document.getElementById('membre_id').value;
+  const montant=document.getElementById('montant').value;
+  if(!membre_id||!montant) return alert('Choisis un membre et un montant');
+  const data={membre_id:parseInt(membre_id),montant:parseInt(montant)};
+  if(isOnline()){
+    const res=await fetch('/api/cotisations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const result=await res.json();
+    if(result.whatsapp&&result.whatsapp.telephone){
+      const numero=result.whatsapp.telephone.replace(/\s/g,'').replace('+','');
+      const message=encodeURIComponent(`ESPOIR CITOYEN 🇨🇮\n\nBonjour ${result.whatsapp.nom},\nNous confirmons la réception de votre cotisation de ${result.whatsapp.montant.toLocaleString()} FCFA.\n\nMerci pour votre engagement!`);
+      window.open(`https://wa.me/${numero}?text=${message}`,'_blank');
+    }
+    alert('Cotisation ajoutée ✅');
+  }else{
+    await saveOffline('cotisations_offline',data);
+    alert('📴 Mode hors ligne : Cotisation sauvegardée\nSera envoyée quand internet reviendra');
+    if('serviceWorker' in navigator){navigator.serviceWorker.ready.then(reg=>reg.sync.register('sync-donnees'));}
+  }
+  document.getElementById('montant').value='';chargerCotisations();
+}
+async function supprimerCotisation(id){if(confirm('Supprimer cette cotisation?')){await fetch(`/api/cotisations/${id}`,{method:'DELETE'});chargerCotisations();}}
+function exporterCotisations(){window.location.href='/api/export/cotisations';}
+function telechargerPDF(){window.location.href='/api/export/pdf-dashboard';}
+async function chargerAdmins(){
+  const res=await fetch('/api/admins');if(res.status===403) return;
+  const data=await res.json();
+  document.getElementById('listeAdmins').innerHTML=data.map(a=>`<tr><td>${a.nom}</td><td>${a.email}</td><td><span class="role-badge role-${a.role}">${a.role}</span></td><td>${new Date(a.date_creation).toLocaleDateString('fr-FR')}</td><td class="no-print">${a.role!=='super_admin'?`<button class="btn-delete" onclick="supprimerAdmin(${a.id})">🗑</button>`:''}</td></tr>`).join('');
+}
+async function ajouterAdmin(){
+  const nom=document.getElementById('admin_nom').value;const email=document.getElementById('admin_email').value;const password=document.getElementById('admin_password').value;const role=document.getElementById('admin_role').value;
+  if(!email||!password) return alert('Email et mot de passe requis');
+  await fetch('/api/admins',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom,email,password,role})});
+  document.getElementById('admin_nom').value='';document.getElementById('admin_email').value='';document.getElementById('admin_password').value='';chargerAdmins();
+}
+async function supprimerAdmin(id){if(confirm('Supprimer cet admin?')){await fetch(`/api/admins/${id}`,{method:'DELETE'});chargerAdmins();}}
+checkAuth();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').then(reg=>console.log('SW enregistré:',reg.scope)).catch(err=>console.log('SW erreur:',err));
+  });
+}
 </script>
 </body>
 </html>
